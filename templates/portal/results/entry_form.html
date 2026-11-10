@@ -1,0 +1,300 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Result Entry: {{ event.code }} - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold fs-6">{{ event.code }}</span>
+            <span class="badge bg-light text-dark border">{{ event.category.name }}</span>
+            <span class="badge bg-secondary-subtle text-secondary">{{ event.division.name_malayalam|default:event.division.name }}</span>
+            {% if result and result.status == 'DRAFT' %}
+                <span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-file-earmark-text me-1"></i>Draft Saved</span>
+            {% endif %}
+        </div>
+        <h3 class="fw-bold mb-0 text-dark">{{ event.name_malayalam }}</h3>
+        <div class="text-muted fs-6">{{ event.name }}</div>
+    </div>
+    <div class="d-flex gap-2">
+        {% if registrations %}
+        <button type="button" class="btn btn-outline-primary btn-sm" id="btnLoadRegistrations">
+            <i class="bi bi-cloud-download me-1"></i> Auto-Fill Registered Contestants ({{ registrations.count }})
+        </button>
+        {% endif %}
+        <a href="{% url 'portal_result_list' %}" class="btn btn-outline-secondary btn-sm">Back to Results</a>
+    </div>
+</div>
+
+<form method="POST" id="resultEntryForm">
+    {% csrf_token %}
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 overflow-hidden">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-award-fill text-warning me-2"></i>Contestant Score Entries
+            </h6>
+            <button type="button" class="btn btn-outline-success btn-sm" id="btnAddRow">
+                <i class="bi bi-plus-circle me-1"></i> Add Blank Row
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-custom align-middle mb-0" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 110px;">Position</th>
+                        <th style="width: 100px;">Chest No.</th>
+                        <th style="min-width: 200px;">Participant / Team Name</th>
+                        <th style="min-width: 220px;">Representing Church</th>
+                        <th style="width: 100px;">Grade</th>
+                        <th style="width: 110px;">Grade Pts</th>
+                        <th style="width: 110px;">Pos Pts</th>
+                        <th style="width: 110px;">Total Pts</th>
+                        <th style="min-width: 120px;">Remarks</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="entriesBody">
+                    {% for entry in existing_entries %}
+                    <tr class="result-row">
+                        <td>
+                            <input type="hidden" name="entry_id[]" value="{{ entry.id }}">
+                            <select name="position[]" class="form-select form-select-sm">
+                                <option value="">None</option>
+                                <option value="1" {% if entry.position == 1 %}selected{% endif %}>1st</option>
+                                <option value="2" {% if entry.position == 2 %}selected{% endif %}>2nd</option>
+                                <option value="3" {% if entry.position == 3 %}selected{% endif %}>3rd</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="chest_number[]" value="{{ entry.chest_number }}" class="form-control form-control-sm font-monospace fw-bold" required placeholder="001">
+                        </td>
+                        <td>
+                            <input type="text" name="participant_name[]" value="{{ entry.participant_name }}" class="form-control form-control-sm fw-semibold" required placeholder="Contestant name">
+                            <input type="hidden" name="participant_id[]" value="{{ entry.participant_id|default:'' }}">
+                        </td>
+                        <td>
+                            <select name="church_id[]" class="form-select form-select-sm" required>
+                                {% for ch in churches %}
+                                <option value="{{ ch.id }}" {% if entry.church_id == ch.id %}selected{% endif %}>
+                                    {{ ch.code }} - {{ ch.name|truncatechars:24 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="grade[]" class="form-select form-select-sm">
+                                <option value="">None</option>
+                                <option value="A" {% if entry.grade == 'A' %}selected{% endif %}>A</option>
+                                <option value="B" {% if entry.grade == 'B' %}selected{% endif %}>B</option>
+                                <option value="C" {% if entry.grade == 'C' %}selected{% endif %}>C</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" step="0.25" min="0" name="grade_points[]" value="{{ entry.grade_points }}" class="form-control form-control-sm input-grade-pts" placeholder="0.00">
+                        </td>
+                        <td>
+                            <input type="number" step="0.25" min="0" name="position_points[]" value="{{ entry.position_points }}" class="form-control form-control-sm input-pos-pts" placeholder="0.00">
+                        </td>
+                        <td>
+                            <input type="text" readonly class="form-control form-control-sm bg-light fw-bold text-success input-total-pts" value="{{ entry.total_points }}">
+                        </td>
+                        <td>
+                            <input type="text" name="remarks[]" value="{{ entry.remarks }}" class="form-control form-control-sm" placeholder="Optional notes">
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-outline-danger btn-sm p-1 btn-delete-row" title="Remove row">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <!-- Default initial blank row if no entries exist -->
+                    <tr class="result-row">
+                        <td>
+                            <input type="hidden" name="entry_id[]" value="">
+                            <select name="position[]" class="form-select form-select-sm">
+                                <option value="">None</option>
+                                <option value="1">1st</option>
+                                <option value="2">2nd</option>
+                                <option value="3">3rd</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="chest_number[]" class="form-control form-control-sm font-monospace fw-bold" required placeholder="001">
+                        </td>
+                        <td>
+                            <input type="text" name="participant_name[]" class="form-control form-control-sm fw-semibold" required placeholder="Contestant name">
+                            <input type="hidden" name="participant_id[]" value="">
+                        </td>
+                        <td>
+                            <select name="church_id[]" class="form-select form-select-sm" required>
+                                <option value="">-- Choose Church --</option>
+                                {% for ch in churches %}
+                                <option value="{{ ch.id }}">{{ ch.code }} - {{ ch.name|truncatechars:24 }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="grade[]" class="form-select form-select-sm">
+                                <option value="">None</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" step="0.25" min="0" name="grade_points[]" value="0.00" class="form-control form-control-sm input-grade-pts" placeholder="0.00">
+                        </td>
+                        <td>
+                            <input type="number" step="0.25" min="0" name="position_points[]" value="0.00" class="form-control form-control-sm input-pos-pts" placeholder="0.00">
+                        </td>
+                        <td>
+                            <input type="text" readonly class="form-control form-control-sm bg-light fw-bold text-success input-total-pts" value="0.00">
+                        </td>
+                        <td>
+                            <input type="text" name="remarks[]" class="form-control form-control-sm" placeholder="Optional notes">
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-outline-danger btn-sm p-1 btn-delete-row" title="Remove row">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Administrative Notes -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4">
+        <label class="form-label small fw-bold text-secondary">Judge Panel / Administrative Remarks</label>
+        <textarea name="notes" class="form-control" rows="2" placeholder="Enter judge panel names, tie-breaking references, or verification remarks...">{{ result.notes|default:'' }}</textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <a href="{% url 'portal_result_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        <div class="d-flex gap-2">
+            <button type="submit" name="action" value="save_draft" class="btn btn-outline-primary px-4">
+                <i class="bi bi-save me-1"></i> Save Draft
+            </button>
+            <button type="submit" name="action" value="save_preview" class="btn btn-zimrah px-4">
+                <i class="bi bi-eye me-1"></i> Save & Preview
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Hidden Registration Data for 1-Click Auto Fill -->
+<script id="registrationData" type="application/json">
+[
+    {% for reg in registrations %}
+    {
+        "chest_number": "{{ reg.chest_number|escapejs }}",
+        "participant_name": "{% if reg.participant %}{{ reg.participant.name|escapejs }}{% else %}{{ reg.group_name|escapejs }}{% endif %}",
+        "participant_id": "{% if reg.participant %}{{ reg.participant.id }}{% else %}{% endif %}",
+        "church_id": "{{ reg.church_id }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Live calculation: Total Points = Grade Points + Position Points
+    function recalculateRow(row) {
+        const gradeInput = row.querySelector('.input-grade-pts');
+        const posInput = row.querySelector('.input-pos-pts');
+        const totalInput = row.querySelector('.input-total-pts');
+
+        const gp = parseFloat(gradeInput.value) || 0;
+        const pp = parseFloat(posInput.value) || 0;
+        totalInput.value = (gp + pp).toFixed(2);
+    }
+
+    document.getElementById('entriesBody').addEventListener('input', function(e) {
+        if (e.target.classList.contains('input-grade-pts') || e.target.classList.contains('input-pos-pts')) {
+            const row = e.target.closest('tr');
+            recalculateRow(row);
+        }
+    });
+
+    // Delete row
+    document.getElementById('entriesBody').addEventListener('click', function(e) {
+        const delBtn = e.target.closest('.btn-delete-row');
+        if (delBtn) {
+            const rows = document.querySelectorAll('.result-row');
+            if (rows.length > 1) {
+                delBtn.closest('tr').remove();
+            } else {
+                alert('At least one contestant row must remain.');
+            }
+        }
+    });
+
+    // Add Blank Row
+    document.getElementById('btnAddRow').addEventListener('click', function() {
+        const tbody = document.getElementById('entriesBody');
+        const firstRow = document.querySelector('.result-row');
+        const clone = firstRow.cloneNode(true);
+
+        // Reset clone values
+        clone.querySelectorAll('input').forEach(input => {
+            if (input.classList.contains('input-grade-pts') || input.classList.contains('input-pos-pts') || input.classList.contains('input-total-pts')) {
+                input.value = '0.00';
+            } else {
+                input.value = '';
+            }
+        });
+        clone.querySelectorAll('select').forEach(select => {
+            select.selectedIndex = 0;
+        });
+
+        tbody.appendChild(clone);
+    });
+
+    // 1-Click Auto Fill from Registrations
+    const btnLoadReg = document.getElementById('btnLoadRegistrations');
+    if (btnLoadReg) {
+        btnLoadReg.addEventListener('click', function() {
+            if (!confirm('This will populate the table with all registered contestants for this event. Continue?')) {
+                return;
+            }
+
+            const regData = JSON.parse(document.getElementById('registrationData').textContent);
+            if (!regData || regData.length === 0) {
+                alert('No registrations available for this competition.');
+                return;
+            }
+
+            const tbody = document.getElementById('entriesBody');
+            const templateRow = document.querySelector('.result-row').cloneNode(true);
+            tbody.innerHTML = '';
+
+            regData.forEach((reg, index) => {
+                const row = templateRow.cloneNode(true);
+                row.querySelector('input[name="entry_id[]"]').value = '';
+                row.querySelector('input[name="chest_number[]"]').value = reg.chest_number;
+                row.querySelector('input[name="participant_name[]"]').value = reg.participant_name;
+                row.querySelector('input[name="participant_id[]"]').value = reg.participant_id || '';
+
+                const churchSelect = row.querySelector('select[name="church_id[]"]');
+                if (churchSelect) {
+                    churchSelect.value = reg.church_id;
+                }
+
+                row.querySelector('.input-grade-pts').value = '0.00';
+                row.querySelector('.input-pos-pts').value = '0.00';
+                row.querySelector('.input-total-pts').value = '0.00';
+                row.querySelector('input[name="remarks[]"]').value = '';
+
+                tbody.appendChild(row);
+            });
+        });
+    }
+</script>
+{% endblock %}

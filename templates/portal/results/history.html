@@ -1,0 +1,96 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Audit History: {{ event.code }} - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold fs-6">{{ event.code }}</span>
+            <span class="badge bg-secondary-subtle text-secondary">Audit Trail</span>
+        </div>
+        <h3 class="fw-bold mb-0 text-dark">{{ event.name_malayalam }}</h3>
+        <div class="text-muted fs-6">{{ event.name }} – Score Modification & Publication History</div>
+    </div>
+    {% if result %}
+        <a href="{% url 'portal_result_preview' event.pk %}" class="btn btn-outline-secondary btn-sm">Back to Preview</a>
+    {% else %}
+        <a href="{% url 'portal_result_list' %}" class="btn btn-outline-secondary btn-sm">Back to Results</a>
+    {% endif %}
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="card-header bg-white py-3">
+        <h6 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-clock-history text-primary me-2"></i>Action Log & Score Deltas
+        </h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-custom align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 170px;">Date & Time</th>
+                    <th style="width: 140px;">Administrator</th>
+                    <th style="width: 170px;">Action Taken</th>
+                    <th>Audit Details & Score Changes</th>
+                    <th style="width: 130px;">IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in audit_logs %}
+                <tr>
+                    <td><small class="fw-semibold text-dark">{{ log.timestamp|date:"d M Y, h:i:s A" }}</small></td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ log.user.username|default:"System" }}</span>
+                        {% if log.user.role %}
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">{{ log.user.get_role_display }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if 'PUBLISHED' in log.action and 'UN' not in log.action %}
+                            <span class="badge bg-success-subtle text-success fw-bold">{{ log.action }}</span>
+                        {% elif 'UNPUBLISHED' in log.action %}
+                            <span class="badge bg-danger-subtle text-danger fw-bold">{{ log.action }}</span>
+                        {% elif 'CORRECTED' in log.action %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis fw-bold">{{ log.action }}</span>
+                        {% else %}
+                            <span class="badge bg-info-subtle text-info fw-bold">{{ log.action }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.changes.reason %}
+                            <div class="small fw-semibold text-danger mb-1">
+                                <i class="bi bi-chat-left-quote me-1"></i>Reason: {{ log.changes.reason }}
+                            </div>
+                        {% endif %}
+
+                        {% if log.changes.old_scores and log.changes.new_scores %}
+                            <div class="small bg-light p-2 rounded border">
+                                <strong class="text-secondary d-block mb-1">Score Comparison:</strong>
+                                {% for chest, old in log.changes.old_scores.items %}
+                                    <div class="font-monospace" style="font-size: 0.78rem;">
+                                        <strong>#{{ chest }} ({{ old.participant }}):</strong>
+                                        Previous: {{ old.total_points }} pts (Pos: {{ old.position|default:'-' }}, Grd: {{ old.grade|default:'-' }})
+                                        &rarr;
+                                        <span class="text-success fw-bold">
+                                            New: {{ log.changes.new_scores|default_if_none:''|slice:chest|default:'-' }}
+                                        </span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <pre class="small text-muted mb-0 font-monospace" style="font-size: 0.75rem;">{{ log.changes }}</pre>
+                        {% endif %}
+                    </td>
+                    <td><small class="text-muted font-monospace">{{ log.ip_address|default:"-" }}</small></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">No audit history found for this event result.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

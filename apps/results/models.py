@@ -173,6 +173,12 @@ class ResultParticipant(models.Model):
         blank=True,
         help_text="Participant role in group performance."
     )
+    points_allocated = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text="Individual championship points credited to this participant from this group result."
+    )
 
     class Meta:
         verbose_name = "Result Participant"

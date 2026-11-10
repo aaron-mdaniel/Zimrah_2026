@@ -1,0 +1,163 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Event Results Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-clipboard-data text-success me-2"></i>Result Management & Publishing</h3>
+        <p class="text-muted small mb-0">Record, verify, and publish scores for all 34 Kalolsavam competitions.</p>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search event code or title...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Result Statuses</option>
+                <option value="PUBLISHED" {% if status_filter == 'PUBLISHED' %}selected{% endif %}>Published Only</option>
+                <option value="DRAFT" {% if status_filter == 'DRAFT' %}selected{% endif %}>Draft Saved Only</option>
+                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending (Awaited)</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="division" class="form-select">
+                <option value="">All Divisions</option>
+                {% for div in divisions %}
+                <option value="{{ div.id }}" {% if division_id == div.id|stringformat:"s" %}selected{% endif %}>
+                    Div {{ div.division_number }}: {{ div.name_malayalam|default:div.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-zimrah w-100">Filter</button>
+            {% if query or status_filter or division_id %}
+                <a href="{% url 'portal_result_list' %}" class="btn btn-outline-secondary">Reset</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Results Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Competition</th>
+                    <th>Division</th>
+                    <th>Type</th>
+                    <th>Result Status</th>
+                    <th>Last Updated</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in page_obj %}
+                <tr>
+                    <td><span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold fs-6">{{ ev.code }}</span></td>
+                    <td class="fw-semibold">
+                        {{ ev.name_malayalam }}
+                        <small class="text-muted d-block">{{ ev.name }}</small>
+                    </td>
+                    <td><small class="text-secondary fw-semibold">Div {{ ev.division.division_number }}</small></td>
+                    <td>
+                        {% if ev.event_type == 'INDIVIDUAL' %}
+                            <span class="badge bg-info-subtle text-info">Solo</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning">Group</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ev.result %}
+                            {% if ev.result.status == 'PUBLISHED' %}
+                                <span class="badge bg-success-subtle text-success fs-6 fw-bold">
+                                    <i class="bi bi-broadcast me-1"></i> Published
+                                </span>
+                            {% elif ev.result.status == 'DRAFT' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis fs-6 fw-bold">
+                                    <i class="bi bi-file-earmark-text me-1"></i> Draft (Private)
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">
+                                <i class="bi bi-hourglass-split me-1"></i> Results Awaited
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ev.result %}
+                            <small class="text-muted">{{ ev.result.updated_at|date:"d M, h:i A" }}</small>
+                            {% if ev.result.published_by %}
+                                <small class="text-muted d-block">by {{ ev.result.published_by.username }}</small>
+                            {% endif %}
+                        {% else %}
+                            <small class="text-muted">-</small>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if not ev.result %}
+                            <a href="{% url 'portal_result_entry' ev.pk %}" class="btn btn-zimrah btn-sm">
+                                <i class="bi bi-pencil-square me-1"></i> Enter Results
+                            </a>
+                        {% elif ev.result.status == 'DRAFT' %}
+                            <a href="{% url 'portal_result_entry' ev.pk %}" class="btn btn-outline-warning text-dark btn-sm me-1" title="Edit Draft">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <a href="{% url 'portal_result_preview' ev.pk %}" class="btn btn-zimrah btn-sm" title="Preview & Publish">
+                                <i class="bi bi-eye"></i> Preview
+                            </a>
+                        {% elif ev.result.status == 'PUBLISHED' %}
+                            <a href="{% url 'portal_result_preview' ev.pk %}" class="btn btn-outline-secondary btn-sm me-1" title="View Published Result">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'PUBLISHER' or request.user.is_superuser %}
+                            <a href="{% url 'portal_result_correct' ev.pk %}" class="btn btn-outline-primary btn-sm me-1" title="Correct Scores">
+                                <i class="bi bi-pencil-fill"></i> Correct
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                        {% if ev.result %}
+                        <a href="{% url 'portal_result_history' ev.pk %}" class="btn btn-outline-secondary btn-sm ms-1" title="Audit History">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">No competition events matching your query.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} events</small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&status={{ status_filter }}&division={{ division_id }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&status={{ status_filter }}&division={{ division_id }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

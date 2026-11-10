@@ -201,6 +201,9 @@
                 <a href="{% url 'portal_registration_list' %}" class="sidebar-link {% if 'registration' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-card-checklist"></i> Registrations
                 </a>
+                <a href="{% url 'portal_result_list' %}" class="sidebar-link {% if 'result' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-clipboard-data"></i> Event Results
+                </a>
 
                 <div class="sidebar-section-title px-3 pt-4 pb-1 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">Advanced</div>
                 {% if request.user.is_superuser %}

@@ -4,6 +4,7 @@ from apps.churches import views as church_views
 from apps.participants import views as participant_views
 from apps.events import views as event_views
 from apps.registrations import views as registration_views
+from apps.results import views as result_views
 
 urlpatterns = [
     # Auth & Dashboard
@@ -11,6 +12,16 @@ urlpatterns = [
     path('login/', account_views.portal_login, name='portal_login'),
     path('logout/', account_views.portal_logout, name='portal_logout'),
     path('dashboard/', account_views.portal_dashboard, name='portal_dashboard'),
+
+    # Results Management Workflow
+    path('results/', result_views.result_list, name='portal_result_list'),
+    path('results/<int:event_id>/entry/', result_views.result_entry_view, name='portal_result_entry'),
+    path('results/<int:event_id>/preview/', result_views.result_preview_view, name='portal_result_preview'),
+    path('results/<int:event_id>/publish/', result_views.result_publish_action, name='portal_result_publish'),
+    path('results/<int:event_id>/unpublish/', result_views.result_unpublish_action, name='portal_result_unpublish'),
+    path('results/<int:event_id>/correct/', result_views.result_correct_view, name='portal_result_correct'),
+    path('results/<int:event_id>/delete/', result_views.result_delete_draft_action, name='portal_result_delete_draft'),
+    path('results/<int:event_id>/history/', result_views.result_history_view, name='portal_result_history'),
 
     # Churches
     path('churches/', church_views.church_list, name='portal_church_list'),
