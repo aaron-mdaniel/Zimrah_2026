@@ -1,0 +1,255 @@
+{% extends "public/base.html" %}
+
+{% block title %}Church Championship Standings | ZIMRAH 2026{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'public_home' %}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Church Championship</li>
+    </ol>
+  </nav>
+
+  <!-- Title Banner -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4 bg-white overflow-hidden">
+    <div class="p-4" style="background: linear-gradient(135deg, #022c22 0%, #064e3b 100%); color: #ffffff;">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <div class="d-inline-flex align-items-center bg-warning bg-opacity-20 text-warning px-3 py-1 rounded-pill mb-2 small fw-bold">
+            <i class="bi bi-trophy-fill me-2"></i>Official District Leaderboard
+          </div>
+          <h2 class="fw-extrabold mb-1 text-white">Church Championship</h2>
+          <p class="text-white-50 mb-0">
+            CSI Madhya Kerala Diocese &bull; Adoor Clergy District Youth Movement
+          </p>
+        </div>
+
+        <div class="d-flex gap-2">
+          <!-- WhatsApp Share -->
+          <a href="https://api.whatsapp.com/send?text=Check%20out%20ZIMRAH%202026%20Church%20Championship%20Standings:%20{{ request.build_absolute_uri|urlencode }}" 
+             target="_blank" class="btn btn-sm btn-success fw-semibold">
+            <i class="bi bi-whatsapp me-1"></i>Share
+          </a>
+          <button class="btn btn-sm btn-light fw-semibold" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Print
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Filter -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white p-3">
+    <form method="get" action="{% url 'public_church_championship' %}" class="row g-2 align-items-center">
+      <div class="col-12 col-md-8">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="search" value="{{ search }}" class="form-control bg-light border-start-0" placeholder="Filter parish name, church code, or location..." aria-label="Search Church">
+        </div>
+      </div>
+      <div class="col-12 col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-zim flex-grow-1">
+          <i class="bi bi-funnel me-1"></i>Filter Standings
+        </button>
+        {% if search %}
+        <a href="{% url 'public_church_championship' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- TOP 3 PODIUM DISPLAY (If results exist) -->
+  {% if top_three and top_three.0.total_points > 0 %}
+  <div class="mb-5">
+    <div class="row g-3 justify-content-center align-items-end">
+      
+      <!-- 2nd Place -->
+      {% if top_three|length > 1 and top_three.1.total_points > 0 %}
+      <div class="col-md-4 col-sm-6 order-2 order-md-1">
+        <div class="podium-box rank-2 h-100">
+          <div class="display-6 mb-2">🥈</div>
+          <span class="badge badge-silver px-3 py-1 mb-2">Runner Up (#{{ top_three.1.rank }})</span>
+          <h5 class="fw-bold mb-1">{{ top_three.1.church_name }}</h5>
+          <div class="text-muted small mb-2">{{ top_three.1.church_location }} ({{ top_three.1.church_code }})</div>
+          <div class="d-inline-block px-3 py-1 rounded-pill bg-light border fw-bold text-dark">
+            {{ top_three.1.total_points }} Points
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 1st Place (Winner) -->
+      {% if top_three.0.total_points > 0 %}
+      <div class="col-md-4 col-sm-6 order-1 order-md-2">
+        <div class="podium-box rank-1 h-100 py-4 shadow-sm">
+          <div class="display-5 mb-2">🏆</div>
+          <span class="badge badge-gold px-4 py-2 fs-6 mb-2">Champion (#{{ top_three.0.rank }})</span>
+          <h4 class="fw-extrabold mb-1 text-dark">{{ top_three.0.church_name }}</h4>
+          <div class="text-muted fw-semibold small mb-3">{{ top_three.0.church_location }} ({{ top_three.0.church_code }})</div>
+          <div class="d-inline-block px-4 py-2 rounded-pill bg-warning bg-opacity-20 border border-warning fw-extrabold fs-5" style="color: #92400e;">
+            {{ top_three.0.total_points }} Points
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 3rd Place -->
+      {% if top_three|length > 2 and top_three.2.total_points > 0 %}
+      <div class="col-md-4 col-sm-6 order-3 order-md-3">
+        <div class="podium-box rank-3 h-100">
+          <div class="display-6 mb-2">🥉</div>
+          <span class="badge badge-bronze px-3 py-1 mb-2">3rd Place (#{{ top_three.2.rank }})</span>
+          <h5 class="fw-bold mb-1">{{ top_three.2.church_name }}</h5>
+          <div class="text-muted small mb-2">{{ top_three.2.church_location }} ({{ top_three.2.church_code }})</div>
+          <div class="d-inline-block px-3 py-1 rounded-pill bg-light border fw-bold text-dark">
+            {{ top_three.2.total_points }} Points
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- FULL CHURCH STANDINGS TABLE (Desktop & Tablet) -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 d-none d-md-block bg-white">
+    <div class="card-header bg-light py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+      <h5 class="fw-bold mb-0 text-dark">
+        <i class="bi bi-trophy me-2 text-warning"></i>Parish Championship Standings
+      </h5>
+      <span class="badge bg-secondary bg-opacity-10 text-dark fw-semibold">
+        {{ total_churches }} Parishes
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light text-muted small text-uppercase">
+          <tr>
+            <th class="ps-4 text-center" style="width: 10%;">Rank</th>
+            <th style="width: 40%;">Parish / Church</th>
+            <th class="text-center" style="width: 10%;">🥇 1st</th>
+            <th class="text-center" style="width: 10%;">🥈 2nd</th>
+            <th class="text-center" style="width: 10%;">🥉 3rd</th>
+            <th class="text-center" style="width: 10%;">Grade A</th>
+            <th class="text-end pe-4" style="width: 20%;">Total Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in standings %}
+          <tr class="{% if item.rank == 1 and item.total_points > 0 %}table-warning table-opacity-10{% endif %}">
+            <td class="ps-4 text-center">
+              {% if item.rank == 1 and item.total_points > 0 %}
+                <span class="badge badge-gold px-3 py-1 fs-6"><i class="bi bi-trophy-fill me-1"></i>#1</span>
+              {% elif item.rank == 2 and item.total_points > 0 %}
+                <span class="badge badge-silver px-3 py-1 fs-6">#2</span>
+              {% elif item.rank == 3 and item.total_points > 0 %}
+                <span class="badge badge-bronze px-3 py-1 fs-6">#3</span>
+              {% else %}
+                <span class="fw-bold text-muted fs-6">#{{ item.rank }}</span>
+              {% endif %}
+              {% if item.is_tied %}
+                <span class="badge bg-light text-muted border d-block mt-1" style="font-size: 0.65rem;">Tied</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="fw-bold text-dark fs-6">{{ item.church_name }}</div>
+              <small class="text-muted">{{ item.church_code }} &bull; {{ item.church_location }}</small>
+            </td>
+            <td class="text-center fw-semibold">{{ item.first_places }}</td>
+            <td class="text-center fw-semibold">{{ item.second_places }}</td>
+            <td class="text-center fw-semibold">{{ item.third_places }}</td>
+            <td class="text-center fw-semibold">{{ item.grade_a_count }}</td>
+            <td class="text-end pe-4">
+              <span class="fw-extrabold fs-5" style="color: var(--zim-primary);">
+                {{ item.total_points }}
+              </span>
+              <small class="text-muted d-block" style="font-size: 0.72rem;">pts</small>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              No churches found matching your query.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MOBILE CARDS VIEW (< 768px) -->
+  <div class="d-md-none mb-4">
+    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size: 0.78rem;">
+      Parish Standings ({{ total_churches }})
+    </h6>
+
+    <div class="row g-2">
+      {% for item in standings %}
+      <div class="col-12">
+        <div class="zim-card p-3 {% if item.rank == 1 and item.total_points > 0 %}border-warning border-2 bg-warning bg-opacity-10{% endif %}">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex align-items-center">
+              {% if item.rank == 1 and item.total_points > 0 %}
+                <span class="badge badge-gold px-2 py-1 me-2"><i class="bi bi-trophy-fill me-1"></i>#1</span>
+              {% elif item.rank == 2 and item.total_points > 0 %}
+                <span class="badge badge-silver px-2 py-1 me-2">#2</span>
+              {% elif item.rank == 3 and item.total_points > 0 %}
+                <span class="badge badge-bronze px-2 py-1 me-2">#3</span>
+              {% else %}
+                <span class="badge bg-light text-dark border px-2 py-1 me-2">#{{ item.rank }}</span>
+              {% endif %}
+              <div>
+                <h6 class="fw-bold mb-0 text-dark">{{ item.church_name }}</h6>
+                <small class="text-muted">{{ item.church_code }} &bull; {{ item.church_location }}</small>
+              </div>
+            </div>
+            <div class="text-end">
+              <span class="fw-extrabold fs-5 text-success">{{ item.total_points }}</span>
+              <small class="text-muted d-block" style="font-size: 0.7rem;">pts</small>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded border small text-muted">
+            <span>🥇 1st: <strong class="text-dark">{{ item.first_places }}</strong></span>
+            <span>🥈 2nd: <strong class="text-dark">{{ item.second_places }}</strong></span>
+            <span>🥉 3rd: <strong class="text-dark">{{ item.third_places }}</strong></span>
+            <span>Grade A: <strong class="text-dark">{{ item.grade_a_count }}</strong></span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center py-4 text-muted bg-white rounded-4 border">
+        No churches found matching your query.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Tie-Breaking Rules Information Card -->
+  <div class="card border-0 rounded-4 bg-white p-4 shadow-sm">
+    <div class="d-flex align-items-center mb-2">
+      <i class="bi bi-info-circle-fill text-warning fs-5 me-2"></i>
+      <h6 class="fw-bold mb-0 text-dark">Championship Scoring & Tie-Breaking Rules</h6>
+    </div>
+    <p class="small text-muted mb-2">
+      Standings reflect all verified competition points accumulated by parish representatives across individual and group events. For group competitions, points are credited to the church once per team result.
+    </p>
+    <div class="d-flex flex-wrap gap-2 small text-muted">
+      <span class="badge bg-light text-dark border">1. Total Points</span>
+      <span class="badge bg-light text-dark border">2. Count of 1st Places</span>
+      <span class="badge bg-light text-dark border">3. Count of 2nd Places</span>
+      <span class="badge bg-light text-dark border">4. Count of 3rd Places</span>
+      <span class="badge bg-light text-dark border">5. Count of Grade A Awards</span>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

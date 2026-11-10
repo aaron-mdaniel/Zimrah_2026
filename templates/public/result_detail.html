@@ -1,0 +1,428 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}{{ event.code }} - {{ event.name_malayalam }} Results | ZIMRAH 2026{% endblock %}
+
+{% block og_title %}{{ event.code }}: {{ event.name_malayalam }} ({{ event.name }}) - ZIMRAH 2026{% endblock %}
+{% block og_description %}Official Kalolsavam competition results for {{ event.name }} - CSI Madhya Kerala Diocese, Adoor Clergy District Youth Movement.{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    .top-bar, .main-nav, .mobile-bottom-nav, .no-print, .zim-footer, #pwa-install-banner {
+      display: none !important;
+    }
+    body {
+      padding: 0 !important;
+      background: #ffffff !important;
+    }
+    .print-header {
+      display: block !important;
+    }
+    .card, .zim-card {
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+    }
+  }
+  .print-header {
+    display: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Print Only Header -->
+  <div class="print-header text-center mb-4 pb-3 border-bottom">
+    <h3 class="fw-bold mb-1">CSI MADHYA KERALA DIOCESE</h3>
+    <h5 class="text-secondary mb-1">Adoor Clergy District Youth Movement</h5>
+    <h4 class="fw-bold text-success mb-2">ZIMRAH 2026 – Song of Praise</h4>
+    <h5 class="fw-bold mb-0">OFFICIAL SCORECARD: {{ event.code }} - {{ event.name_malayalam }} ({{ event.name }})</h5>
+  </div>
+
+  <!-- Breadcrumbs & Navigation -->
+  <div class="no-print d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb small mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'public_home' %}" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'public_results_list' %}" class="text-decoration-none">Results</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ event.code }}</li>
+      </ol>
+    </nav>
+    <a href="{% url 'public_results_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back to All Events
+    </a>
+  </div>
+
+  <!-- Event Header Banner -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4 bg-white overflow-hidden">
+    <div class="p-4" style="background: linear-gradient(135deg, #022c22 0%, #064e3b 100%); color: #ffffff;">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+        
+        <div>
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <span class="badge bg-warning text-dark fw-bold px-3 py-1 fs-6">{{ event.code }}</span>
+            <span class="badge bg-white bg-opacity-20 text-white">{{ event.division.name }}</span>
+            <span class="badge bg-white bg-opacity-20 text-white">{{ event.category.name }}</span>
+            <span class="badge bg-white bg-opacity-20 text-white">
+              <i class="bi bi-person-fill me-1"></i>{{ event.get_event_type_display }}
+            </span>
+          </div>
+
+          <h2 class="fw-extrabold mb-1 text-white">{{ event.name_malayalam }}</h2>
+          <h5 class="text-white-50 fw-normal mb-3">{{ event.name }}</h5>
+
+          <div class="d-flex flex-wrap gap-3 small text-white-50">
+            <span><i class="bi bi-clock me-1 text-warning"></i>Duration: {{ event.duration_minutes }} minutes</span>
+            {% if event.category.name|lower == 'stage' %}
+              <span><i class="bi bi-geo-alt me-1 text-warning"></i>St. Mathias CSI Church, Munroethuruth (14 Nov)</span>
+            {% else %}
+              <span><i class="bi bi-geo-alt me-1 text-warning"></i>Thazhathmon, TVM (8 Nov)</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Status & Share Bar -->
+        <div class="text-md-end no-print">
+          <div class="mb-3">
+            {% if is_published %}
+              <span class="badge badge-published px-3 py-2 fs-6">
+                <i class="bi bi-check-circle-fill me-1"></i>Result Published
+              </span>
+              {% if event_result.published_at %}
+                <small class="d-block text-white-50 mt-1" style="font-size: 0.72rem;">
+                  Published on {{ event_result.published_at|date:"d M Y, h:i A" }}
+                </small>
+              {% endif %}
+            {% else %}
+              <span class="badge badge-awaited px-3 py-2 fs-6">
+                <i class="bi bi-hourglass-split me-1"></i>Results Awaited
+              </span>
+              <small class="d-block text-white-50 mt-1" style="font-size: 0.72rem;">
+                Live updates enabled
+              </small>
+            {% endif %}
+          </div>
+
+          <!-- Share Actions -->
+          <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+            <!-- WhatsApp Share -->
+            <a href="https://api.whatsapp.com/send?text=Check%20out%20ZIMRAH%202026%20Results%20for%20{{ event.code }}%20-%20{{ event.name|urlencode }}:%20{{ full_url|urlencode }}" 
+               target="_blank" class="btn btn-sm btn-success fw-semibold">
+              <i class="bi bi-whatsapp me-1"></i>Share
+            </a>
+            
+            <!-- Copy Link Button -->
+            <button id="copyLinkBtn" class="btn btn-sm btn-light text-dark fw-semibold" onclick="copyResultLink()">
+              <i class="bi bi-link-45deg me-1"></i>Copy Link
+            </button>
+
+            <!-- Print Button -->
+            <button class="btn btn-sm btn-outline-light" onclick="window.print()">
+              <i class="bi bi-printer me-1"></i>Print
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {% if is_published %}
+    
+    <!-- TOP 3 PODIUM DISPLAY (If positions exist) -->
+    {% if top_positions.first or top_positions.second or top_positions.third %}
+    <div class="mb-5">
+      <div class="text-center mb-4">
+        <h4 class="fw-extrabold mb-1">Winners Podium</h4>
+        <p class="text-muted small">Top positions awarded in {{ event.name_malayalam }}</p>
+      </div>
+
+      <div class="row g-3 justify-content-center align-items-end">
+        
+        <!-- 2nd Place (Silver) -->
+        {% if top_positions.second %}
+        <div class="col-md-4 col-sm-6 order-2 order-md-1">
+          <div class="podium-box rank-2 h-100">
+            <div class="display-6 mb-2">🥈</div>
+            <span class="badge badge-silver px-3 py-1 mb-2">2nd Position</span>
+            <div class="chest-badge mb-2">#{{ top_positions.second.chest_number }}</div>
+            <h5 class="fw-bold mb-1">{{ top_positions.second.participant_name }}</h5>
+            <div class="text-muted small mb-2">{{ top_positions.second.church.name }}</div>
+            <div class="d-inline-block px-3 py-1 rounded-pill bg-light border fw-bold text-dark">
+              Grade {{ top_positions.second.grade|default:"-" }} &bull; {{ top_positions.second.total_points }} pts
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- 1st Place (Gold) -->
+        {% if top_positions.first %}
+        <div class="col-md-4 col-sm-6 order-1 order-md-2">
+          <div class="podium-box rank-1 h-100 py-4 shadow-sm">
+            <div class="display-5 mb-2">🥇</div>
+            <span class="badge badge-gold px-4 py-2 fs-6 mb-2">1st Position</span>
+            <div class="chest-badge fs-6 mb-2">#{{ top_positions.first.chest_number }}</div>
+            <h4 class="fw-extrabold mb-1 text-dark">{{ top_positions.first.participant_name }}</h4>
+            <div class="text-muted fw-semibold small mb-3">{{ top_positions.first.church.name }}</div>
+            <div class="d-inline-block px-4 py-2 rounded-pill bg-warning bg-opacity-20 border border-warning fw-extrabold fs-6" style="color: #92400e;">
+              Grade {{ top_positions.first.grade|default:"-" }} &bull; {{ top_positions.first.total_points }} Points
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- 3rd Place (Bronze) -->
+        {% if top_positions.third %}
+        <div class="col-md-4 col-sm-6 order-3 order-md-3">
+          <div class="podium-box rank-3 h-100">
+            <div class="display-6 mb-2">🥉</div>
+            <span class="badge badge-bronze px-3 py-1 mb-2">3rd Position</span>
+            <div class="chest-badge mb-2">#{{ top_positions.third.chest_number }}</div>
+            <h5 class="fw-bold mb-1">{{ top_positions.third.participant_name }}</h5>
+            <div class="text-muted small mb-2">{{ top_positions.third.church.name }}</div>
+            <div class="d-inline-block px-3 py-1 rounded-pill bg-light border fw-bold text-dark">
+              Grade {{ top_positions.third.grade|default:"-" }} &bull; {{ top_positions.third.total_points }} pts
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- OFFICIAL SCORECARD TABLE (Desktop & Tablet) -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 d-none d-md-block bg-white">
+      <div class="card-header bg-light py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-table me-2 text-success"></i>Official Scorecard
+        </h5>
+        <span class="badge bg-secondary bg-opacity-10 text-dark fw-semibold">
+          {{ entries|length }} Contestant{{ entries|length|pluralize }}
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted small text-uppercase">
+            <tr>
+              <th class="ps-4" style="width: 10%;">Position</th>
+              <th style="width: 12%;">Chest #</th>
+              <th style="width: 28%;">Participant / Group</th>
+              <th style="width: 22%;">Representing Church</th>
+              <th class="text-center" style="width: 8%;">Grade</th>
+              <th class="text-end" style="width: 9%;">Grade Pts</th>
+              <th class="text-end" style="width: 9%;">Pos Pts</th>
+              <th class="text-end pe-4" style="width: 12%;">Total Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in entries %}
+            <tr class="{% if entry.position == 1 %}table-warning table-opacity-10{% elif entry.position == 2 or entry.position == 3 %}bg-light bg-opacity-50{% endif %}">
+              <td class="ps-4">
+                {% if entry.position == 1 %}
+                  <span class="badge badge-gold px-2 py-1"><i class="bi bi-trophy-fill me-1"></i>1st</span>
+                {% elif entry.position == 2 %}
+                  <span class="badge badge-silver px-2 py-1">2nd</span>
+                {% elif entry.position == 3 %}
+                  <span class="badge badge-bronze px-2 py-1">3rd</span>
+                {% else %}
+                  <span class="text-muted small">-</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="chest-badge">{{ entry.chest_number }}</span>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ entry.participant_name }}</div>
+                {% if entry.remarks %}
+                  <small class="text-muted fst-italic">{{ entry.remarks }}</small>
+                {% endif %}
+
+                <!-- Group Members Drawer if group event -->
+                {% if entry.participants.all %}
+                  <div class="mt-1">
+                    <a class="small text-decoration-none" data-bs-toggle="collapse" href="#groupMembers{{ entry.id }}" role="button">
+                      <i class="bi bi-people me-1"></i>View {{ entry.participants.count }} Team Members <i class="bi bi-chevron-down small"></i>
+                    </a>
+                    <div class="collapse mt-2" id="groupMembers{{ entry.id }}">
+                      <div class="p-2 rounded bg-light border small">
+                        {% for gp in entry.participants.all %}
+                          <span class="badge bg-white text-dark border me-1 mb-1">
+                            {{ gp.participant.name }} (#{{ gp.participant.chest_number }})
+                            {% if gp.role %}&bull; <span class="text-muted">{{ gp.role }}</span>{% endif %}
+                          </span>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="text-dark">{{ entry.church.name }}</div>
+                <small class="text-muted">{{ entry.church.code }}</small>
+              </td>
+              <td class="text-center">
+                {% if entry.grade == 'A' %}
+                  <span class="badge bg-success bg-opacity-15 text-success border border-success fw-bold px-2">A Grade</span>
+                {% elif entry.grade == 'B' %}
+                  <span class="badge bg-primary bg-opacity-15 text-primary border border-primary fw-bold px-2">B Grade</span>
+                {% elif entry.grade == 'C' %}
+                  <span class="badge bg-secondary bg-opacity-15 text-secondary border fw-bold px-2">C Grade</span>
+                {% else %}
+                  <span class="text-muted small">-</span>
+                {% endif %}
+              </td>
+              <td class="text-end text-muted font-monospace">{{ entry.grade_points }}</td>
+              <td class="text-end text-muted font-monospace">{{ entry.position_points }}</td>
+              <td class="text-end pe-4">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 fs-6">
+                  {{ entry.total_points }} pts
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MOBILE CARDS VIEW (< 768px) -->
+    <div class="d-md-none mb-4">
+      <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size: 0.78rem;">
+        Contestant Scorecards ({{ entries|length }})
+      </h6>
+
+      <div class="row g-2">
+        {% for entry in entries %}
+        <div class="col-12">
+          <div class="zim-card p-3 border {% if entry.position == 1 %}border-warning border-2 bg-warning bg-opacity-10{% endif %}">
+            
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="d-flex align-items-center">
+                {% if entry.position == 1 %}
+                  <span class="badge badge-gold px-2 py-1 me-2">🥇 1st Place</span>
+                {% elif entry.position == 2 %}
+                  <span class="badge badge-silver px-2 py-1 me-2">🥈 2nd Place</span>
+                {% elif entry.position == 3 %}
+                  <span class="badge badge-bronze px-2 py-1 me-2">🥉 3rd Place</span>
+                {% endif %}
+                <span class="chest-badge">#{{ entry.chest_number }}</span>
+              </div>
+              <span class="badge bg-success text-white fw-bold px-2 py-1 fs-6">
+                {{ entry.total_points }} pts
+              </span>
+            </div>
+
+            <h5 class="fw-bold text-dark mb-1">{{ entry.participant_name }}</h5>
+            <div class="text-muted small mb-2">{{ entry.church.name }}</div>
+
+            <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded border small">
+              <div>
+                <span class="text-muted">Grade:</span>
+                <strong class="text-dark">{{ entry.grade|default:"None" }}</strong>
+                <span class="text-muted">({{ entry.grade_points }} pts)</span>
+              </div>
+              <div>
+                <span class="text-muted">Pos Pts:</span>
+                <strong class="text-dark">{{ entry.position_points }}</strong>
+              </div>
+            </div>
+
+            {% if entry.participants.all %}
+              <div class="mt-2 pt-2 border-top">
+                <small class="text-muted d-block mb-1 fw-bold">Team Members:</small>
+                {% for gp in entry.participants.all %}
+                  <span class="badge bg-light text-dark border me-1 mb-1" style="font-size: 0.72rem;">
+                    {{ gp.participant.name }}
+                  </span>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  {% else %}
+    
+    <!-- RESULTS AWAITED STATE WITH LIVE AUTO-REFRESH -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-5 text-center my-4">
+      <div class="mb-4">
+        <div class="d-inline-flex p-4 rounded-circle bg-warning bg-opacity-10 text-warning mb-3">
+          <i class="bi bi-hourglass-top display-4"></i>
+        </div>
+        <h3 class="fw-extrabold text-dark mb-2">Results Awaited</h3>
+        <p class="text-muted mx-auto" style="max-width: 500px;">
+          The competition has not yet concluded or judges are compiling the final official scores.
+        </p>
+      </div>
+
+      <div class="p-3 rounded-3 bg-light border mx-auto mb-4" style="max-width: 460px;">
+        <div class="d-flex align-items-center justify-content-center">
+          <div class="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+          <span class="small fw-semibold text-muted">Listening for live publication updates...</span>
+        </div>
+        <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+          This page automatically checks every 15 seconds. No need to reload manually.
+        </small>
+      </div>
+
+      <div>
+        <a href="{% url 'public_results_list' %}" class="btn btn-outline-secondary rounded-pill px-4 me-2">
+          <i class="bi bi-arrow-left me-1"></i>All Competitions
+        </a>
+        <a href="{% url 'public_church_championship' %}" class="btn btn-zim rounded-pill px-4">
+          <i class="bi bi-buildings me-1"></i>Current Standings
+        </a>
+      </div>
+    </div>
+
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Copy Link functionality with toast/alert feedback
+  function copyResultLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      const btn = document.getElementById('copyLinkBtn');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="bi bi-check-lg me-1 text-success"></i>Copied!';
+      btn.classList.add('border-success');
+      setTimeout(() => {
+        btn.innerHTML = originalHtml;
+        btn.classList.remove('border-success');
+      }, 2500);
+    }).catch(err => {
+      alert("Link copied: " + window.location.href);
+    });
+  }
+
+  // If unpublished: Poll specifically for this event code every 15 seconds!
+  {% if not is_published %}
+  const EVENT_CODE = "{{ event.code }}";
+  setInterval(async () => {
+    try {
+      const response = await fetch(`/api/v1/results/${EVENT_CODE}/`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.status === 'PUBLISHED') {
+          // Results are now ready! Reload cleanly to display scorecard
+          window.location.reload();
+        }
+      }
+    } catch (e) {
+      console.debug("Checking event status:", e);
+    }
+  }, 15000);
+  {% endif %}
+</script>
+{% endblock %}

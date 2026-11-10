@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import generics, permissions
 from .models import EventResult
 from .serializers import EventResultSerializer
@@ -7,6 +8,7 @@ class PublishedResultListView(generics.ListAPIView):
     """
     Public REST API endpoint returning all published competition results.
     Consumable by future Android app and external feeds.
+    Supports filtering by category, division, and full-text search (query).
     """
     serializer_class = EventResultSerializer
     permission_classes = [permissions.AllowAny]
@@ -22,10 +24,24 @@ class PublishedResultListView(generics.ListAPIView):
 
         cat = self.request.query_params.get('category')
         div = self.request.query_params.get('division')
+        query = self.request.query_params.get('q')
+
         if cat:
             qs = qs.filter(event__category__id=cat)
         if div:
             qs = qs.filter(event__division__division_number=div)
+        if query:
+            q_clean = query.strip()
+            qs = qs.filter(
+                Q(event__code__icontains=q_clean) |
+                Q(event__name__icontains=q_clean) |
+                Q(event__name_malayalam__icontains=q_clean) |
+                Q(entries__chest_number__icontains=q_clean) |
+                Q(entries__participant_name__icontains=q_clean) |
+                Q(entries__church__name__icontains=q_clean) |
+                Q(entries__church__code__icontains=q_clean)
+            ).distinct()
+
         return qs
 
 

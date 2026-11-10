@@ -1,0 +1,631 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>{% block title %}ZIMRAH 2026 – Song of Praise | Kalolsavam Results{% endblock %}</title>
+  
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="ZIMRAH 2026 – Song of Praise | Online Result Management">
+  <meta name="description" content="CSI Madhya Kerala Diocese Adoor Clergy District Youth Movement - Live Kalolsavam Competition Results and Championship Standings.">
+  <meta name="theme-color" content="#064e3b">
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{% block og_title %}ZIMRAH 2026 – Song of Praise{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Live Results & Championship Standings – CSI Madhya Kerala Diocese, Adoor Clergy District Youth Movement.{% endblock %}">
+  <meta property="og:image" content="{% block og_image %}{% static 'images/zimrah_banner.png' %}{% endblock %}">
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/icon-192.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'images/icon-192.png' %}">
+
+  <!-- Bootstrap 5 & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Google Fonts for Malayalam & Latin -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Malayalam:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --zim-primary: #064e3b;       /* Deep Forest Emerald */
+      --zim-primary-dark: #022c22;  /* Dark Emerald */
+      --zim-primary-light: #047857; /* Light Emerald */
+      --zim-gold: #f59e0b;          /* Vibrant Gold */
+      --zim-gold-dark: #d97706;     /* Deep Gold */
+      --zim-gold-light: #fef3c7;    /* Warm Gold Tint */
+      --zim-accent: #1e3a8a;        /* Royal Sapphire */
+      --zim-bg: #f8fafc;            /* Clean Slate White */
+      --zim-card-bg: #ffffff;
+      --zim-text-dark: #0f172a;
+      --zim-text-muted: #64748b;
+      --zim-border: #e2e8f0;
+      --zim-radius: 14px;
+      --zim-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+      --zim-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --zim-shadow-lg: 0 10px 25px rgba(6, 78, 59, 0.12);
+    }
+
+    body {
+      font-family: 'Manrope', 'Noto Sans Malayalam', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--zim-bg);
+      color: var(--zim-text-dark);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 70px; /* Space for mobile bottom bar */
+    }
+
+    @media (min-width: 992px) {
+      body {
+        padding-bottom: 0;
+      }
+    }
+
+    /* Top Announcement Bar */
+    .top-bar {
+      background: linear-gradient(90deg, #022c22 0%, #064e3b 50%, #047857 100%);
+      color: #fef3c7;
+      font-size: 0.85rem;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Main Navbar */
+    .main-nav {
+      background: #ffffff;
+      border-bottom: 1px solid var(--zim-border);
+      box-shadow: var(--zim-shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .brand-logo-img {
+      height: 44px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .emblem-logo-img {
+      height: 38px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .nav-link {
+      font-weight: 600;
+      color: #334155 !important;
+      padding: 8px 14px !important;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--zim-primary) !important;
+      background-color: #ecfdf5;
+    }
+
+    .nav-link.active {
+      font-weight: 700;
+    }
+
+    /* Pulse dot for live status */
+    .live-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 0 rgba(34, 197, 94, 0.4);
+      animation: pulse 1.8s infinite;
+      margin-right: 6px;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+      }
+      70% {
+        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
+    /* Cards and Containers */
+    .zim-card {
+      background: #ffffff;
+      border: 1px solid var(--zim-border);
+      border-radius: var(--zim-radius);
+      box-shadow: var(--zim-shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+
+    .zim-card:hover {
+      box-shadow: var(--zim-shadow-md);
+    }
+
+    .zim-card-header {
+      background: #fafaf9;
+      border-bottom: 1px solid var(--zim-border);
+      padding: 14px 18px;
+      font-weight: 700;
+    }
+
+    /* Badges */
+    .badge-published {
+      background-color: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+      border: 1px solid #bbf7d0;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .badge-awaited {
+      background-color: #fef3c7;
+      color: #b45309;
+      font-weight: 700;
+      border: 1px solid #fde68a;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .badge-gold {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 2px 4px rgba(217, 119, 6, 0.3);
+    }
+
+    .badge-silver {
+      background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 2px 4px rgba(100, 116, 139, 0.3);
+    }
+
+    .badge-bronze {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 2px 4px rgba(180, 83, 9, 0.3);
+    }
+
+    /* Buttons */
+    .btn-zim {
+      background-color: var(--zim-primary);
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 9px 18px;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-zim:hover {
+      background-color: var(--zim-primary-dark);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(6, 78, 59, 0.25);
+    }
+
+    .btn-zim-gold {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #ffffff;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 9px 18px;
+      border: none;
+    }
+
+    .btn-zim-gold:hover {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(217, 119, 6, 0.35);
+    }
+
+    /* Mobile Bottom Navigation Bar */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: #ffffff;
+      border-top: 1px solid var(--zim-border);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1040;
+    }
+
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #64748b;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 6px;
+      width: 20%;
+      transition: color 0.15s;
+    }
+
+    .mobile-nav-item i {
+      font-size: 1.25rem;
+      margin-bottom: 2px;
+    }
+
+    .mobile-nav-item.active, .mobile-nav-item:hover {
+      color: var(--zim-primary);
+    }
+
+    /* Podium Card Styles */
+    .podium-box {
+      border-radius: var(--zim-radius);
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+      background: #ffffff;
+      border: 1px solid var(--zim-border);
+      box-shadow: var(--zim-shadow-sm);
+    }
+
+    .podium-box.rank-1 {
+      border-top: 5px solid var(--zim-gold);
+      background: linear-gradient(180deg, #fffbeb 0%, #ffffff 40%);
+    }
+
+    .podium-box.rank-2 {
+      border-top: 5px solid #94a3b8;
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 40%);
+    }
+
+    .podium-box.rank-3 {
+      border-top: 5px solid #d97706;
+      background: linear-gradient(180deg, #fff7ed 0%, #ffffff 40%);
+    }
+
+    /* Chest Number styling */
+    .chest-badge {
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 800;
+      font-size: 0.95rem;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 2px 7px;
+      display: inline-block;
+    }
+
+    /* Footer */
+    .zim-footer {
+      background: #022c22;
+      color: #94a3b8;
+      padding: 40px 0 20px 0;
+      border-top: 3px solid var(--zim-gold);
+      margin-top: auto;
+    }
+
+    .zim-footer a {
+      color: #cbd5e1;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .zim-footer a:hover {
+      color: var(--zim-gold);
+    }
+
+    /* PWA Install Banner */
+    #pwa-install-banner {
+      display: none;
+      background: linear-gradient(90deg, #064e3b 0%, #047857 100%);
+      color: white;
+      padding: 12px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 1050;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Toast Notification */
+    .toast-container-custom {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      z-index: 1060;
+    }
+
+    @media (min-width: 992px) {
+      .toast-container-custom {
+        bottom: 24px;
+      }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- PWA Install Prompt Banner (Visible when installable) -->
+  <div id="pwa-install-banner" class="d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center">
+      <img src="{% static 'images/icon-192.png' %}" alt="ZIMRAH App" style="width: 34px; height: 34px; border-radius: 8px; margin-right: 12px;">
+      <div>
+        <strong class="d-block" style="font-size: 0.9rem;">Install ZIMRAH 2026 App</strong>
+        <small class="text-white-50">Quick access to live kalolsavam results</small>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button id="pwa-install-btn" class="btn btn-sm btn-light fw-bold text-success px-3">Install</button>
+      <button id="pwa-close-btn" class="btn btn-sm btn-link text-white-50 p-1" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  </div>
+
+  <!-- Top Info Bar -->
+  <div class="top-bar d-none d-md-block">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div>
+        <span class="me-3"><i class="bi bi-church me-1"></i> CSI Madhya Kerala Diocese</span>
+        <span><i class="bi bi-people-fill me-1"></i> Adoor Clergy District Youth Movement</span>
+      </div>
+      <div>
+        <span class="live-dot"></span>
+        <span class="fw-semibold text-white me-3">Live Kalolsavam Updates Active</span>
+        <a href="/portal/login/" class="text-white text-decoration-none opacity-75 hover-opacity-100" style="font-size: 0.8rem;">
+          <i class="bi bi-lock-fill me-1"></i>Admin Portal
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header -->
+  <header class="main-nav">
+    <div class="container py-2">
+      <div class="d-flex align-items-center justify-content-between">
+        
+        <!-- Left: Branding & Logos -->
+        <a href="{% url 'public_home' %}" class="d-flex align-items-center text-decoration-none">
+          <img src="{% static 'images/csi_diocese_emblem.png' %}" alt="CSI Diocese Emblem" class="emblem-logo-img me-2">
+          <img src="{% static 'images/zimrah_logo.png' %}" alt="ZIMRAH 2026" class="brand-logo-img me-2">
+          <div class="d-none d-sm-block">
+            <div class="fw-bold text-dark lh-1" style="font-size: 1.15rem; letter-spacing: -0.3px;">ZIMRAH 2026</div>
+            <small class="text-muted" style="font-size: 0.72rem; font-weight: 600;">Song of Praise</small>
+          </div>
+        </a>
+
+        <!-- Center: Desktop Nav Links -->
+        <nav class="d-none d-lg-flex align-items-center gap-1">
+          <a href="{% url 'public_home' %}" class="nav-link {% if request.resolver_match.url_name == 'public_home' %}active{% endif %}">
+            <i class="bi bi-house-door me-1"></i>Home
+          </a>
+          <a href="{% url 'public_results_list' %}" class="nav-link {% if request.resolver_match.url_name == 'public_results_list' or request.resolver_match.url_name == 'public_result_detail' %}active{% endif %}">
+            <i class="bi bi-trophy me-1"></i>Results
+          </a>
+          <a href="{% url 'public_church_championship' %}" class="nav-link {% if request.resolver_match.url_name == 'public_church_championship' %}active{% endif %}">
+            <i class="bi bi-buildings me-1"></i>Church Championship
+          </a>
+          <a href="{% url 'public_individual_championship' %}" class="nav-link {% if request.resolver_match.url_name == 'public_individual_championship' %}active{% endif %}">
+            <i class="bi bi-person-badge me-1"></i>Individual Championship
+          </a>
+        </nav>
+
+        <!-- Right: Search Button & Live Status -->
+        <div class="d-flex align-items-center gap-2">
+          <a href="{% url 'public_search' %}" class="btn btn-outline-secondary rounded-pill px-3 py-1 d-flex align-items-center" style="font-size: 0.88rem;">
+            <i class="bi bi-search me-1 text-muted"></i>
+            <span class="d-none d-sm-inline">Search Chest / Event</span>
+          </a>
+          <div class="d-lg-none">
+            <a href="{% url 'public_results_list' %}" class="btn btn-sm btn-zim d-flex align-items-center">
+              <span class="live-dot"></span>Results
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar (< 992px) -->
+  <nav class="mobile-bottom-nav d-lg-none" aria-label="Mobile Navigation">
+    <a href="{% url 'public_home' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'public_home' %}active{% endif %}">
+      <i class="bi bi-house-door"></i>
+      <span>Home</span>
+    </a>
+    <a href="{% url 'public_results_list' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'public_results_list' or request.resolver_match.url_name == 'public_result_detail' %}active{% endif %}">
+      <i class="bi bi-trophy"></i>
+      <span>Results</span>
+    </a>
+    <a href="{% url 'public_church_championship' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'public_church_championship' %}active{% endif %}">
+      <i class="bi bi-buildings"></i>
+      <span>Churches</span>
+    </a>
+    <a href="{% url 'public_individual_championship' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'public_individual_championship' %}active{% endif %}">
+      <i class="bi bi-person-badge"></i>
+      <span>Contestants</span>
+    </a>
+    <a href="{% url 'public_search' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'public_search' %}active{% endif %}">
+      <i class="bi bi-search"></i>
+      <span>Search</span>
+    </a>
+  </nav>
+
+  <!-- Toast Notification Container for Real-Time Result Broadcasts -->
+  <div class="toast-container-custom">
+    <div id="liveResultToast" class="toast align-items-center text-bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-center">
+          <span class="live-dot me-2"></span>
+          <div>
+            <strong id="toastTitle">Result Announcement!</strong>
+            <div id="toastMessage" style="font-size: 0.85rem;" class="text-white-50">New competition results were just published.</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Public Footer -->
+  <footer class="zim-footer">
+    <div class="container">
+      <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+          <div class="d-flex align-items-center mb-3">
+            <img src="{% static 'images/zimrah_logo.png' %}" alt="ZIMRAH Logo" style="height: 38px; filter: brightness(1.2);" class="me-2">
+            <div>
+              <h5 class="text-white fw-bold mb-0">ZIMRAH 2026</h5>
+              <small class="text-warning">Song of Praise</small>
+            </div>
+          </div>
+          <p class="small text-white-50 mb-3" style="line-height: 1.6;">
+            The official online Result Management and Championship Ranking System for ZIMRAH 2026 Youth Kalolsavam, organized by CSI Madhya Kerala Diocese, Adoor Clergy District Youth Movement.
+          </p>
+          <div class="small text-white-50">
+            <div><i class="bi bi-calendar-event me-2 text-warning"></i><strong>Literary:</strong> 8 Nov 2026 – Thazhathmon, TVM</div>
+            <div><i class="bi bi-geo-alt me-2 text-warning"></i><strong>Stage:</strong> 14 Nov 2026 – St. Mathias CSI Church, Munroethuruth</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-lg-3 offset-lg-1">
+          <h6 class="text-white fw-bold mb-3">Quick Navigation</h6>
+          <ul class="list-unstyled small mb-0">
+            <li class="mb-2"><a href="{% url 'public_home' %}"><i class="bi bi-chevron-right me-1 text-warning"></i>Home</a></li>
+            <li class="mb-2"><a href="{% url 'public_results_list' %}"><i class="bi bi-chevron-right me-1 text-warning"></i>All Competitions</a></li>
+            <li class="mb-2"><a href="{% url 'public_church_championship' %}"><i class="bi bi-chevron-right me-1 text-warning"></i>Church Championship</a></li>
+            <li class="mb-2"><a href="{% url 'public_individual_championship' %}"><i class="bi bi-chevron-right me-1 text-warning"></i>Individual Championship</a></li>
+            <li class="mb-2"><a href="{% url 'public_search' %}"><i class="bi bi-chevron-right me-1 text-warning"></i>Search Contestants</a></li>
+          </ul>
+        </div>
+
+        <div class="col-6 col-lg-3">
+          <h6 class="text-white fw-bold mb-3">Administration</h6>
+          <ul class="list-unstyled small mb-3">
+            <li class="mb-2"><a href="/portal/login/"><i class="bi bi-shield-lock me-1 text-warning"></i>Admin Portal Login</a></li>
+            <li class="mb-2"><a href="/api/v1/results/" target="_blank"><i class="bi bi-code-slash me-1 text-warning"></i>Open Result REST API</a></li>
+            <li class="mb-2"><a href="/api/v1/live/summary/" target="_blank"><i class="bi bi-activity me-1 text-warning"></i>Live Feed API</a></li>
+          </ul>
+          <div class="p-2 rounded bg-black bg-opacity-25 border border-secondary border-opacity-25">
+            <small class="text-white-50 d-block" style="font-size: 0.72rem;">System Status</small>
+            <span class="badge bg-success bg-opacity-75 text-white" style="font-size: 0.75rem;"><i class="bi bi-check-circle me-1"></i>Server Online</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-top border-secondary border-opacity-25 d-flex flex-column flex-sm-row justify-content-between align-items-center small text-white-50">
+        <div>&copy; 2026 CSI Madhya Kerala Diocese – Adoor Clergy District Youth Movement.</div>
+        <div class="mt-2 mt-sm-0">All rights reserved. Designed for High Availability.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- PWA Service Worker Registration & Live Polling Script -->
+  <script>
+    // 1. Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('ZIMRAH PWA ServiceWorker active:', reg.scope))
+          .catch(err => console.log('ServiceWorker registration error:', err));
+      });
+    }
+
+    // 2. PWA Installation Prompt Handling
+    let deferredPrompt;
+    const pwaBanner = document.getElementById('pwa-install-banner');
+    const pwaInstallBtn = document.getElementById('pwa-install-btn');
+    const pwaCloseBtn = document.getElementById('pwa-close-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (pwaBanner) pwaBanner.style.display = 'flex';
+    });
+
+    if (pwaInstallBtn) {
+      pwaInstallBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install: ${outcome}`);
+        deferredPrompt = null;
+        if (pwaBanner) pwaBanner.style.display = 'none';
+      });
+    }
+
+    if (pwaCloseBtn) {
+      pwaCloseBtn.addEventListener('click', () => {
+        if (pwaBanner) pwaBanner.style.display = 'none';
+      });
+    }
+
+    // 3. Periodic Background Polling for Real-Time Result Notifications (every 25 seconds)
+    let lastKnownPublishedCount = null;
+    const POLLING_INTERVAL_MS = 25000;
+
+    async function pollLiveResults() {
+      try {
+        const response = await fetch('/api/v1/live/summary/');
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        if (lastKnownPublishedCount !== null && data.published_results > lastKnownPublishedCount) {
+          // New results detected!
+          showLiveToast(data.latest_results[0]);
+        }
+        lastKnownPublishedCount = data.published_results;
+      } catch (err) {
+        console.debug('Polling live summary:', err);
+      }
+    }
+
+    function showLiveToast(latestResult) {
+      const toastEl = document.getElementById('liveResultToast');
+      if (!toastEl) return;
+      const toastTitle = document.getElementById('toastTitle');
+      const toastMsg = document.getElementById('toastMessage');
+
+      if (latestResult) {
+        toastTitle.textContent = `New Result: ${latestResult.code}`;
+        toastMsg.innerHTML = `${latestResult.name_malayalam || latestResult.name} published! <a href="/results/${latestResult.code}/" class="text-warning text-decoration-underline ms-1">View Scorecard</a>`;
+      }
+
+      const toast = new bootstrap.Toast(toastEl, { delay: 10000 });
+      toast.show();
+    }
+
+    // Initialize polling
+    setTimeout(() => {
+      pollLiveResults();
+      setInterval(pollLiveResults, POLLING_INTERVAL_MS);
+    }, 2000);
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,483 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}ZIMRAH 2026 – Song of Praise | Official Kalolsavam Results{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="position-relative text-white py-5" style="background: linear-gradient(135deg, #022c22 0%, #064e3b 60%, #047857 100%); border-bottom: 4px solid var(--zim-gold);">
+  <div class="container py-3">
+    <div class="row align-items-center g-4">
+      
+      <div class="col-lg-8">
+        <div class="d-inline-flex align-items-center bg-black bg-opacity-30 border border-warning border-opacity-50 px-3 py-1 rounded-pill mb-3">
+          <i class="bi bi-music-note-beamed text-warning me-2"></i>
+          <span class="small text-warning fw-bold tracking-wide text-uppercase">CSI Madhya Kerala Diocese &bull; Adoor Clergy District Youth Movement</span>
+        </div>
+
+        <h1 class="display-4 fw-extrabold mb-1" style="letter-spacing: -1px;">
+          ZIMRAH 2026
+        </h1>
+        <p class="h4 text-warning fw-semibold mb-3">
+          <i class="bi bi-quote"></i>Song of Praise<i class="bi bi-quote"></i>
+        </p>
+        <p class="lead text-white-50 mb-4" style="max-width: 650px;">
+          Welcome to the official live result tracking and championship portal for the Adoor Clergy District Youth Kalolsavam competitions.
+        </p>
+
+        <!-- Venues and Dates Pills -->
+        <div class="row g-2 mb-4" style="max-width: 650px;">
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-black bg-opacity-25 border border-white border-opacity-10 d-flex align-items-center">
+              <div class="rounded-circle bg-warning bg-opacity-20 p-2 me-3 text-warning">
+                <i class="bi bi-pen-fill fs-5"></i>
+              </div>
+              <div>
+                <small class="text-white-50 d-block fw-bold text-uppercase" style="font-size: 0.72rem;">Literary Events</small>
+                <div class="fw-bold" style="font-size: 0.95rem;">8 November 2026</div>
+                <small class="text-white-50">Thazhathmon, TVM</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-black bg-opacity-25 border border-white border-opacity-10 d-flex align-items-center">
+              <div class="rounded-circle bg-warning bg-opacity-20 p-2 me-3 text-warning">
+                <i class="bi bi-mic-fill fs-5"></i>
+              </div>
+              <div>
+                <small class="text-white-50 d-block fw-bold text-uppercase" style="font-size: 0.72rem;">Stage Events</small>
+                <div class="fw-bold" style="font-size: 0.95rem;">14 November 2026</div>
+                <small class="text-white-50">St. Mathias CSI Church, Munroethuruth</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Global Search Bar -->
+        <form action="{% url 'public_search' %}" method="get" class="d-flex shadow-lg rounded-pill p-1 bg-white" style="max-width: 580px;">
+          <input type="text" name="q" class="form-control border-0 rounded-pill ps-4 py-2" placeholder="Search Chest # (e.g. 001), Contestant, Event, Church..." aria-label="Search" required>
+          <button class="btn btn-zim-gold rounded-pill px-4 d-flex align-items-center" type="submit">
+            <i class="bi bi-search me-2"></i>Search
+          </button>
+        </form>
+
+      </div>
+
+      <!-- Right: Live Progress & Fast Stats Card -->
+      <div class="col-lg-4">
+        <div class="card border-0 rounded-4 shadow-lg p-3 bg-white text-dark">
+          <div class="card-body">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0 text-dark">
+                <span class="live-dot"></span>Live Event Status
+              </h6>
+              <span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1">Auto-Updating</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
+                <span>Results Progress</span>
+                <span class="text-dark fw-bold">{{ summary.completion_pct }}% Completed</span>
+              </div>
+              <div class="progress" style="height: 10px; border-radius: 5px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: {{ summary.completion_pct }}%;" aria-valuenow="{{ summary.completion_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+
+            <!-- Metric Boxes -->
+            <div class="row g-2 text-center mb-3">
+              <div class="col-4">
+                <div class="p-2 rounded bg-light border">
+                  <div class="fs-4 fw-extrabold text-dark">{{ summary.total_events }}</div>
+                  <small class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Events</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
+                  <div class="fs-4 fw-extrabold text-success">{{ summary.published_results }}</div>
+                  <small class="text-success fw-bold" style="font-size: 0.7rem;">Published</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                  <div class="fs-4 fw-extrabold text-warning-emphasis">{{ summary.pending_results }}</div>
+                  <small class="text-warning-emphasis fw-bold" style="font-size: 0.7rem;">Awaited</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <a href="{% url 'public_results_list' %}" class="btn btn-zim py-2 fw-semibold">
+                <i class="bi bi-trophy me-1"></i>View All 34 Competitions
+              </a>
+              <div class="row g-2">
+                <div class="col-6">
+                  <a href="{% url 'public_church_championship' %}" class="btn btn-outline-secondary w-100 py-2 small fw-semibold">
+                    <i class="bi bi-buildings me-1"></i>Churches
+                  </a>
+                </div>
+                <div class="col-6">
+                  <a href="{% url 'public_individual_championship' %}" class="btn btn-outline-secondary w-100 py-2 small fw-semibold">
+                    <i class="bi bi-person me-1"></i>Contestants
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Latest Published Results Ticker / Cards -->
+{% if latest_results %}
+<section class="py-4 bg-light border-bottom">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex align-items-center">
+        <span class="badge badge-published me-2">NEW</span>
+        <h5 class="fw-bold mb-0">Recently Published Results</h5>
+      </div>
+      <a href="{% url 'public_results_list' %}?status=published" class="small fw-bold text-decoration-none" style="color: var(--zim-primary);">
+        All Published Results <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="row g-3">
+      {% for result in latest_results %}
+      <div class="col-md-6 col-lg-3">
+        <div class="zim-card h-100 p-3 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-secondary bg-opacity-10 text-dark fw-bold">{{ result.event.code }}</span>
+              <small class="text-muted" style="font-size: 0.75rem;">
+                <i class="bi bi-clock me-1"></i>{{ result.published_at|date:"d M, H:i" }}
+              </small>
+            </div>
+            <h6 class="fw-bold mb-1 text-truncate" title="{{ result.event.name_malayalam }}">{{ result.event.name_malayalam }}</h6>
+            <div class="small text-muted mb-2 text-truncate">{{ result.event.name }}</div>
+
+            {% with winner=result.entries.all.0 %}
+            {% if winner %}
+            <div class="p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25 mb-2">
+              <div class="d-flex align-items-center">
+                <span class="fs-5 me-2">🥇</span>
+                <div class="overflow-hidden">
+                  <strong class="d-block text-truncate small" style="font-size: 0.82rem;">{{ winner.participant_name }}</strong>
+                  <small class="text-muted" style="font-size: 0.72rem;">{{ winner.church.name }} ({{ winner.total_points }} pts)</small>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+          </div>
+
+          <a href="{% url 'public_result_detail' result.event.code %}" class="btn btn-sm btn-outline-success w-100 mt-2">
+            View Scorecard <i class="bi bi-chevron-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Championship Leaderboard Previews -->
+<section class="py-5">
+  <div class="container">
+    
+    <div class="text-center mb-5">
+      <h2 class="fw-extrabold mb-1">Championship Standings</h2>
+      <p class="text-muted">Real-time leaderboard calculated strictly with 5-level tie-breaking rules</p>
+    </div>
+
+    <div class="row g-4">
+      
+      <!-- Left: Church Championship Preview -->
+      <div class="col-lg-6">
+        <div class="zim-card h-100 d-flex flex-column">
+          <div class="zim-card-header d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-buildings text-warning me-2"></i>
+              <span class="text-dark fw-bold">Church Championship</span>
+            </div>
+            <a href="{% url 'public_church_championship' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="font-size: 0.8rem;">
+              Full Standings <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+
+          <div class="card-body p-0 flex-grow-1">
+            {% if top_churches %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                  <tr>
+                    <th style="width: 15%;" class="text-center">Rank</th>
+                    <th style="width: 55%;">Parish / Church</th>
+                    <th style="width: 15%;" class="text-center">1st</th>
+                    <th style="width: 15%;" class="text-end pe-3">Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in top_churches %}
+                  <tr>
+                    <td class="text-center">
+                      {% if c.rank == 1 %}
+                        <span class="badge badge-gold px-2 py-1"><i class="bi bi-trophy-fill me-1"></i>#1</span>
+                      {% elif c.rank == 2 %}
+                        <span class="badge badge-silver px-2 py-1">#2</span>
+                      {% elif c.rank == 3 %}
+                        <span class="badge badge-bronze px-2 py-1">#3</span>
+                      {% else %}
+                        <span class="text-muted fw-bold">#{{ c.rank }}</span>
+                      {% endif %}
+                      {% if c.is_tied %}<small class="d-block text-muted" style="font-size: 0.65rem;">Tied</small>{% endif %}
+                    </td>
+                    <td>
+                      <div class="fw-bold text-dark">{{ c.church_name }}</div>
+                      <small class="text-muted">{{ c.church_code }} &bull; {{ c.church_location }}</small>
+                    </td>
+                    <td class="text-center fw-semibold text-muted">
+                      {{ c.first_places }}
+                    </td>
+                    <td class="text-end pe-3">
+                      <span class="fw-extrabold fs-6" style="color: var(--zim-primary);">{{ c.total_points }}</span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-inbox fs-2 d-block text-muted mb-2"></i>
+              No results published yet. Standings will populate as competitions conclude.
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="p-3 bg-light border-top text-center">
+            <a href="{% url 'public_church_championship' %}" class="small fw-bold text-decoration-none text-muted">
+              View all parishes and complete score breakdown <i class="bi bi-chevron-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Individual Championship Preview -->
+      <div class="col-lg-6">
+        <div class="zim-card h-100 d-flex flex-column">
+          <div class="zim-card-header d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-person-badge text-warning me-2"></i>
+              <span class="text-dark fw-bold">Individual Championship</span>
+            </div>
+            <a href="{% url 'public_individual_championship' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="font-size: 0.8rem;">
+              Full Standings <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+
+          <div class="card-body p-0 flex-grow-1">
+            {% if top_individuals %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted">
+                  <tr>
+                    <th style="width: 15%;" class="text-center">Rank</th>
+                    <th style="width: 55%;">Contestant</th>
+                    <th style="width: 15%;" class="text-center">Category</th>
+                    <th style="width: 15%;" class="text-end pe-3">Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in top_individuals %}
+                  <tr>
+                    <td class="text-center">
+                      {% if p.rank == 1 %}
+                        <span class="badge badge-gold px-2 py-1"><i class="bi bi-star-fill me-1"></i>#1</span>
+                      {% elif p.rank == 2 %}
+                        <span class="badge badge-silver px-2 py-1">#2</span>
+                      {% elif p.rank == 3 %}
+                        <span class="badge badge-bronze px-2 py-1">#3</span>
+                      {% else %}
+                        <span class="text-muted fw-bold">#{{ p.rank }}</span>
+                      {% endif %}
+                      {% if p.is_tied %}<small class="d-block text-muted" style="font-size: 0.65rem;">Tied</small>{% endif %}
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <span class="chest-badge me-2">{{ p.chest_number }}</span>
+                        <div>
+                          <div class="fw-bold text-dark">{{ p.participant_name }}</div>
+                          <small class="text-muted">{{ p.church_name }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-light text-dark border">{{ p.category_display }}</span>
+                    </td>
+                    <td class="text-end pe-3">
+                      <span class="fw-extrabold fs-6" style="color: var(--zim-primary);">{{ p.total_points }}</span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-inbox fs-2 d-block text-muted mb-2"></i>
+              No individual points recorded yet. Contestant rankings update upon publishing.
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="p-3 bg-light border-top text-center">
+            <a href="{% url 'public_individual_championship' %}" class="small fw-bold text-decoration-none text-muted">
+              View Junior & Senior leaderboards <i class="bi bi-chevron-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Festival Competitions Section (Literary & Stage) -->
+<section class="py-5 bg-white border-top">
+  <div class="container">
+    
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+      <div>
+        <h2 class="fw-extrabold mb-1">Competition Events</h2>
+        <p class="text-muted mb-0">Browse all 34 Kalolsavam competitions across Literary & Stage divisions</p>
+      </div>
+      <div class="mt-3 mt-md-0">
+        <a href="{% url 'public_results_list' %}" class="btn btn-zim px-4">
+          <i class="bi bi-grid-3x3-gap-fill me-2"></i>View All With Scorecards
+        </a>
+      </div>
+    </div>
+
+    <!-- Nav Tabs for Event Categories -->
+    <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="pills-stage-tab" data-bs-toggle="pill" data-bs-target="#pills-stage" type="button" role="tab">
+          <i class="bi bi-mic-fill me-1"></i>Stage Events (24)
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="pills-literary-tab" data-bs-toggle="pill" data-bs-target="#pills-literary" type="button" role="tab">
+          <i class="bi bi-pen-fill me-1"></i>Literary Events (10)
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="pills-tabContent">
+      
+      <!-- Stage Events Tab -->
+      <div class="tab-pane fade show active" id="pills-stage" role="tabpanel">
+        <div class="p-3 rounded-3 bg-light border mb-3 d-flex align-items-center">
+          <i class="bi bi-geo-alt-fill text-danger fs-5 me-2"></i>
+          <div>
+            <strong>Venue:</strong> St. Mathias CSI Church, Munroethuruth &bull; <strong>Date:</strong> 14 November 2026
+          </div>
+        </div>
+
+        <div class="row g-3">
+          {% for event in stage_events %}
+          <div class="col-md-6 col-lg-4">
+            <div class="zim-card h-100 p-3 d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-secondary bg-opacity-10 text-dark fw-bold">{{ event.code }}</span>
+                  {% if event.result and event.result.status == 'PUBLISHED' %}
+                    <span class="badge badge-published"><i class="bi bi-check-circle-fill me-1"></i>Published</span>
+                  {% else %}
+                    <span class="badge badge-awaited"><i class="bi bi-hourglass-split me-1"></i>Awaited</span>
+                  {% endif %}
+                </div>
+                <h6 class="fw-bold text-dark mb-1">{{ event.name_malayalam }}</h6>
+                <div class="small text-muted mb-2">{{ event.name }}</div>
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                  <span class="badge bg-light text-secondary border">{{ event.division.name }}</span>
+                  <span><i class="bi bi-clock me-1"></i>{{ event.duration_minutes }}m</span>
+                </div>
+              </div>
+
+              <div class="mt-3 pt-2 border-top">
+                {% if event.result and event.result.status == 'PUBLISHED' %}
+                  <a href="{% url 'public_result_detail' event.code %}" class="btn btn-sm btn-outline-success w-100 fw-semibold">
+                    <i class="bi bi-trophy me-1"></i>View Scorecard
+                  </a>
+                {% else %}
+                  <a href="{% url 'public_result_detail' event.code %}" class="btn btn-sm btn-light text-muted w-100">
+                    Results Awaited <i class="bi bi-arrow-right ms-1"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Literary Events Tab -->
+      <div class="tab-pane fade" id="pills-literary" role="tabpanel">
+        <div class="p-3 rounded-3 bg-light border mb-3 d-flex align-items-center">
+          <i class="bi bi-geo-alt-fill text-danger fs-5 me-2"></i>
+          <div>
+            <strong>Venue:</strong> Thazhathmon, TVM &bull; <strong>Date:</strong> 8 November 2026
+          </div>
+        </div>
+
+        <div class="row g-3">
+          {% for event in literary_events %}
+          <div class="col-md-6 col-lg-4">
+            <div class="zim-card h-100 p-3 d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-secondary bg-opacity-10 text-dark fw-bold">{{ event.code }}</span>
+                  {% if event.result and event.result.status == 'PUBLISHED' %}
+                    <span class="badge badge-published"><i class="bi bi-check-circle-fill me-1"></i>Published</span>
+                  {% else %}
+                    <span class="badge badge-awaited"><i class="bi bi-hourglass-split me-1"></i>Awaited</span>
+                  {% endif %}
+                </div>
+                <h6 class="fw-bold text-dark mb-1">{{ event.name_malayalam }}</h6>
+                <div class="small text-muted mb-2">{{ event.name }}</div>
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                  <span class="badge bg-light text-secondary border">{{ event.division.name }}</span>
+                  <span><i class="bi bi-clock me-1"></i>{{ event.duration_minutes }}m</span>
+                </div>
+              </div>
+
+              <div class="mt-3 pt-2 border-top">
+                {% if event.result and event.result.status == 'PUBLISHED' %}
+                  <a href="{% url 'public_result_detail' event.code %}" class="btn btn-sm btn-outline-success w-100 fw-semibold">
+                    <i class="bi bi-trophy me-1"></i>View Scorecard
+                  </a>
+                {% else %}
+                  <a href="{% url 'public_result_detail' event.code %}" class="btn btn-sm btn-light text-muted w-100">
+                    Results Awaited <i class="bi bi-arrow-right ms-1"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+{% endblock %}

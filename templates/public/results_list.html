@@ -1,0 +1,180 @@
+{% extends "public/base.html" %}
+
+{% block title %}All Competitions & Results | ZIMRAH 2026{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <!-- Breadcrumb & Header -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'public_home' %}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Competitions & Results</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+    <div>
+      <h2 class="fw-extrabold mb-1">Competition Results</h2>
+      <p class="text-muted mb-0">Browse scorecards for all 34 Literary & Stage competitions</p>
+    </div>
+    <div class="mt-2 mt-md-0">
+      <span class="badge bg-light text-dark border px-3 py-2 fw-semibold">
+        Showing {{ total_count }} Competition{{ total_count|pluralize }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Filter & Search Controls -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-3">
+      <form method="get" action="{% url 'public_results_list' %}" class="row g-2 align-items-center">
+        
+        <!-- Search Input -->
+        <div class="col-12 col-md-4">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control bg-light border-start-0" placeholder="Search event name or EV code..." aria-label="Search">
+          </div>
+        </div>
+
+        <!-- Division Filter -->
+        <div class="col-6 col-md-3">
+          <select name="division" class="form-select bg-light" aria-label="Filter by Division">
+            <option value="">All Divisions</option>
+            {% for div in divisions %}
+            <option value="{{ div.division_number }}" {% if selected_division == div.division_number|stringformat:"s" %}selected{% endif %}>
+              Div {{ div.division_number }}: {{ div.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="col-6 col-md-2">
+          <select name="category" class="form-select bg-light" aria-label="Filter by Category">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-6 col-md-2">
+          <select name="status" class="form-select bg-light" aria-label="Filter by Status">
+            <option value="">All Status</option>
+            <option value="published" {% if selected_status == 'published' %}selected{% endif %}>Published Only</option>
+            <option value="awaited" {% if selected_status == 'awaited' %}selected{% endif %}>Results Awaited</option>
+          </select>
+        </div>
+
+        <!-- Submit & Reset -->
+        <div class="col-6 col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-zim w-100" title="Apply Filters">
+            <i class="bi bi-funnel"></i>
+          </button>
+          {% if search_query or selected_division or selected_category or selected_status %}
+          <a href="{% url 'public_results_list' %}" class="btn btn-outline-secondary" title="Reset Filters">
+            <i class="bi bi-x-lg"></i>
+          </a>
+          {% endif %}
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Events List Grid -->
+  {% if events %}
+  <div class="row g-3">
+    {% for ev in events %}
+    <div class="col-md-6 col-lg-4">
+      <div class="zim-card h-100 p-3 d-flex flex-column justify-content-between">
+        
+        <!-- Card Top -->
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-secondary bg-opacity-10 text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
+              {{ ev.code }}
+            </span>
+            {% if ev.result and ev.result.status == 'PUBLISHED' %}
+              <span class="badge badge-published">
+                <i class="bi bi-check-circle-fill me-1"></i>Published
+              </span>
+            {% else %}
+              <span class="badge badge-awaited">
+                <i class="bi bi-hourglass-split me-1"></i>Results Awaited
+              </span>
+            {% endif %}
+          </div>
+
+          <h5 class="fw-bold text-dark mb-1">{{ ev.name_malayalam }}</h5>
+          <div class="small text-muted mb-2">{{ ev.name }}</div>
+
+          <div class="d-flex flex-wrap gap-2 small text-muted mb-3">
+            <span class="badge bg-light text-dark border">{{ ev.division.name }}</span>
+            <span class="badge bg-light text-secondary border">{{ ev.category.name }}</span>
+            <span class="badge bg-light text-secondary border"><i class="bi bi-clock me-1"></i>{{ ev.duration_minutes }}m</span>
+          </div>
+
+          <!-- If Published: Winner Preview -->
+          {% if ev.result and ev.result.status == 'PUBLISHED' %}
+            <div class="p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25 mb-2">
+              <small class="text-success fw-bold d-block mb-1" style="font-size: 0.72rem;">TOP WINNER</small>
+              {% for entry in ev.result.entries.all %}
+                {% if entry.position == 1 %}
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="text-truncate me-2">
+                    <span class="fs-6 me-1">🥇</span>
+                    <strong class="text-dark small">{{ entry.participant_name }}</strong>
+                    <div class="text-muted" style="font-size: 0.7rem;">{{ entry.church.name }} (#{{ entry.chest_number }})</div>
+                  </div>
+                  <span class="badge bg-success fw-bold text-white">{{ entry.total_points }} pts</span>
+                </div>
+                {% endif %}
+              {% empty %}
+                <small class="text-muted">Completed</small>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="p-2 rounded bg-light border text-muted small mb-2 d-flex align-items-center">
+              <i class="bi bi-info-circle me-2 text-warning"></i>
+              <span>Results will be published as soon as judges evaluate contestants.</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Card Bottom Button -->
+        <div class="mt-3 pt-2 border-top">
+          {% if ev.result and ev.result.status == 'PUBLISHED' %}
+            <a href="{% url 'public_result_detail' ev.code %}" class="btn btn-sm btn-zim w-100 fw-semibold">
+              <i class="bi bi-trophy me-1"></i>View Full Official Scorecard
+            </a>
+          {% else %}
+            <a href="{% url 'public_result_detail' ev.code %}" class="btn btn-sm btn-outline-secondary w-100">
+              <i class="bi bi-clock me-1"></i>Check Live Status
+            </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <!-- Empty State -->
+  <div class="text-center py-5 bg-white rounded-4 border">
+    <div class="display-5 text-muted mb-3"><i class="bi bi-search"></i></div>
+    <h5 class="fw-bold">No competitions matched your filter</h5>
+    <p class="text-muted small mb-3">Try adjusting your search query, division, or status selection.</p>
+    <a href="{% url 'public_results_list' %}" class="btn btn-outline-secondary rounded-pill px-4">
+      Clear All Filters
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
