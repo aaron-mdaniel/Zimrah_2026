@@ -1,0 +1,128 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}{{ event.code }} - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold fs-5">{{ event.code }}</span>
+            <span class="badge bg-light text-dark border">{{ event.category.name }}</span>
+            <span class="badge bg-secondary-subtle text-secondary">{{ event.division.name_malayalam|default:event.division.name }}</span>
+            {% if event.event_type == 'INDIVIDUAL' %}
+                <span class="badge bg-info-subtle text-info">Solo Competition</span>
+            {% else %}
+                <span class="badge bg-warning-subtle text-warning">Group Competition</span>
+            {% endif %}
+        </div>
+        <h3 class="fw-bold mb-0 text-dark">{{ event.name_malayalam }}</h3>
+        <div class="text-muted fs-6">{{ event.name }}</div>
+    </div>
+    <div class="d-flex gap-2">
+        {% if event.event_type == 'INDIVIDUAL' %}
+            <a href="{% url 'portal_registration_add' %}?event={{ event.pk }}" class="btn btn-zimrah btn-sm">
+                <i class="bi bi-person-plus-fill me-1"></i> Register Participant
+            </a>
+        {% else %}
+            <a href="{% url 'portal_registration_group_add' %}?event={{ event.pk }}" class="btn btn-zimrah-gold btn-sm">
+                <i class="bi bi-people-fill me-1"></i> Register Church Team
+            </a>
+        {% endif %}
+        <a href="{% url 'portal_registration_event_print' event.pk %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i> Printable Roster
+        </a>
+        {% if request.user.role == 'SUPER_ADMIN' or request.user.is_superuser %}
+        <a href="{% url 'portal_event_edit' event.pk %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil me-1"></i> Edit Event
+        </a>
+        {% endif %}
+        <a href="{% url 'portal_event_list' %}" class="btn btn-outline-secondary btn-sm">Back</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100">
+            <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-info-circle text-primary me-2"></i>Competition Specifications</h6>
+            <div class="mb-2">
+                <small class="text-muted d-block">Schedule Date & Venue</small>
+                <div class="fw-semibold">{{ event.category.date|default:"Date TBD" }} | {{ event.category.venue }}</div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">Duration</small>
+                <div class="fw-semibold">{{ event.duration_display|default:event.duration_minutes|default:"As per rules" }}</div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">Section / Age Restrictions</small>
+                <div class="fw-semibold">{{ event.section.name|default:"Open Category" }}</div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">Team Size</small>
+                <div class="fw-semibold">{{ event.min_participants }} to {{ event.max_participants }} members</div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">Championship Contribution</small>
+                <div>
+                    {% if event.contributes_to_individual %}<span class="badge bg-success-subtle text-success me-1">Individual Leaderboard</span>{% endif %}
+                    {% if event.contributes_to_church %}<span class="badge bg-primary-subtle text-primary">Church Leaderboard</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-card-checklist text-success me-2"></i>Registered Contestants ({{ total_registrations }})
+                </h6>
+                <a href="{% url 'portal_registration_event_print' event.pk %}" target="_blank" class="small text-decoration-none">
+                    <i class="bi bi-printer me-1"></i> Print Roster
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Chest</th>
+                            <th>Contestant / Team</th>
+                            <th>Church</th>
+                            <th>Members</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in registrations %}
+                        <tr>
+                            <td><span class="badge bg-secondary-subtle text-secondary font-monospace fw-bold">#{{ reg.chest_number }}</span></td>
+                            <td class="fw-semibold">
+                                {% if reg.participant %}
+                                    <a href="{% url 'portal_participant_detail' reg.participant.pk %}" class="text-decoration-none text-dark">
+                                        {{ reg.participant.name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-primary fw-bold">{{ reg.group_name }}</span>
+                                {% endif %}
+                            </td>
+                            <td><small class="fw-semibold text-secondary">{{ reg.church.code }} - {{ reg.church.name }}</small></td>
+                            <td>
+                                {% if reg.members.all %}
+                                    <small class="text-muted">
+                                        {% for m in reg.members.all %}{{ m.participant.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                    </small>
+                                {% else %}
+                                    <small class="text-muted">Solo Entry</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No contestants registered for this competition yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

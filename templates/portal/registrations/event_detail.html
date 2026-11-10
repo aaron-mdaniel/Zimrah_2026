@@ -1,0 +1,107 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Roster: {{ event.code }} - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold fs-5">{{ event.code }}</span>
+            <span class="badge bg-light text-dark border">{{ event.category.name }}</span>
+            {% if event.event_type == 'INDIVIDUAL' %}
+                <span class="badge bg-info-subtle text-info">Solo</span>
+            {% else %}
+                <span class="badge bg-warning-subtle text-warning">Group</span>
+            {% endif %}
+        </div>
+        <h3 class="fw-bold mb-0 text-dark">{{ event.name_malayalam }}</h3>
+        <div class="text-muted fs-6">{{ event.name }} ({{ total_registrations }} Registered)</div>
+    </div>
+    <div class="d-flex gap-2">
+        {% if event.event_type == 'INDIVIDUAL' %}
+            <a href="{% url 'portal_registration_add' %}?event={{ event.pk }}" class="btn btn-zimrah btn-sm">
+                <i class="bi bi-person-plus-fill me-1"></i> Register Contestant
+            </a>
+        {% else %}
+            <a href="{% url 'portal_registration_group_add' %}?event={{ event.pk }}" class="btn btn-zimrah-gold btn-sm">
+                <i class="bi bi-people-fill me-1"></i> Register Group Team
+            </a>
+        {% endif %}
+        <a href="{% url 'portal_registration_event_print' event.pk %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i> Print Official Sheet
+        </a>
+        <a href="{% url 'portal_registration_list' %}" class="btn btn-outline-secondary btn-sm">Back</a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Chest No.</th>
+                    <th>Participant / Team Name</th>
+                    <th>Representing Church</th>
+                    <th>Team Composition</th>
+                    <th>Registration Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in registrations %}
+                <tr>
+                    <td>
+                        <span class="badge bg-secondary-subtle text-secondary font-monospace fw-bold fs-6">
+                            #{{ reg.chest_number }}
+                        </span>
+                    </td>
+                    <td class="fw-semibold">
+                        {% if reg.participant %}
+                            <a href="{% url 'portal_participant_detail' reg.participant.pk %}" class="text-decoration-none text-dark hover-underline">
+                                {{ reg.participant.name }}
+                            </a>
+                            {% if reg.participant.name_malayalam %}
+                                <small class="text-muted d-block">{{ reg.participant.name_malayalam }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-primary fw-bold">{{ reg.group_name }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ reg.church.code }}</span>
+                        <small class="text-muted d-block">{{ reg.church.name }}</small>
+                    </td>
+                    <td>
+                        {% if reg.members.all %}
+                            <span class="badge bg-success-subtle text-success me-1">{{ reg.members.count }} Members</span>
+                            <small class="text-muted d-block">
+                                {% for m in reg.members.all %}{{ m.participant.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            </small>
+                        {% else %}
+                            <span class="badge bg-light text-muted border">Individual</span>
+                        {% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ reg.registered_at|date:"d M Y, h:i A" }}</small></td>
+                    <td class="text-end">
+                        {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'RESULT_ADMIN' or request.user.is_superuser %}
+                        <form method="POST" action="{% url 'portal_registration_delete' reg.pk %}" class="d-inline" onsubmit="return confirm('Remove registration for this contestant?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove Registration">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        No contestants currently registered for this event.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

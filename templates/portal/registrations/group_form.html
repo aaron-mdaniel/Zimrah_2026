@@ -1,0 +1,85 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Register Church Group Team{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-people-fill text-warning me-2"></i>Register Church Group Team</h4>
+            <a href="{% url 'portal_registration_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+            <form method="POST" novalidate id="groupRegForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">
+                        {% for err in form.non_field_errors %}{{ err }}<br>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Festival Edition</label>
+                        {{ form.edition }}
+                        {% if form.edition.errors %}<div class="text-danger small mt-1">{{ form.edition.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Group Competition Event <span class="text-danger">*</span></label>
+                        {{ form.event }}
+                        {% if form.event.errors %}<div class="text-danger small mt-1">{{ form.event.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold text-secondary">Representing Church <span class="text-danger">*</span></label>
+                        {{ form.church }}
+                        {% if form.church.errors %}<div class="text-danger small mt-1">{{ form.church.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold text-secondary">Team / Group Title <span class="text-danger">*</span></label>
+                        {{ form.group_name }}
+                        {% if form.group_name.errors %}<div class="text-danger small mt-1">{{ form.group_name.errors.0 }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">e.g., 'St. Mathias Choir', 'Team A'</small>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-secondary">Team Chest Number <span class="text-danger">*</span></label>
+                        {{ form.chest_number }}
+                        {% if form.chest_number.errors %}<div class="text-danger small mt-1">{{ form.chest_number.errors.0 }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">e.g., G01, 201</small>
+                    </div>
+
+                    <div class="col-md-12 mt-4">
+                        <label class="form-label fw-bold text-secondary mb-2">
+                            <i class="bi bi-person-check-fill text-success me-1"></i>Select Team Members <span class="text-danger">*</span>
+                        </label>
+                        <div class="alert alert-info py-2 small mb-2">
+                            Select members from the enrolled participants list below. All members must belong to the selected church.
+                        </div>
+
+                        <div class="border rounded-3 p-3 bg-light" style="max-height: 280px; overflow-y: auto;" id="memberCheckboxContainer">
+                            {{ form.member_ids }}
+                        </div>
+                        {% if form.member_ids.errors %}<div class="text-danger small mt-1">{{ form.member_ids.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'portal_registration_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-zimrah-gold px-4">
+                        <i class="bi bi-check2-circle me-1"></i> Complete Team Registration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

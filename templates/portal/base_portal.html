@@ -1,0 +1,251 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Portal{% endblock %} | ZIMRAH 2026</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Malayalam:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --zimrah-primary: #064e3b;
+            --zimrah-primary-dark: #022c22;
+            --zimrah-accent: #047857;
+            --zimrah-gold: #d97706;
+            --zimrah-gold-light: #fef3c7;
+            --zimrah-bg: #f8fafc;
+            --zimrah-sidebar: #064e3b;
+            --zimrah-text: #1e293b;
+        }
+
+        body {
+            font-family: 'Manrope', 'Noto Sans Malayalam', sans-serif;
+            background-color: var(--zimrah-bg);
+            color: var(--zimrah-text);
+            min-height: 100vh;
+        }
+
+        .portal-navbar {
+            background: linear-gradient(135deg, var(--zimrah-primary-dark) 0%, var(--zimrah-primary) 100%);
+            box-shadow: 0 4px 12px rgba(6, 78, 59, 0.15);
+            padding: 0.6rem 1.5rem;
+        }
+
+        .portal-sidebar {
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            min-height: calc(100vh - 72px);
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.25rem;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            margin: 0.25rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #ecfdf5;
+            color: var(--zimrah-accent);
+        }
+
+        .sidebar-link i {
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+            color: #64748b;
+        }
+
+        .sidebar-link.active i, .sidebar-link:hover i {
+            color: var(--zimrah-accent);
+        }
+
+        .card-stat {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-stat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .badge-role {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-super-admin { background-color: #fee2e2; color: #991b1b; }
+        .badge-result-admin { background-color: #e0f2fe; color: #075985; }
+        .badge-publisher { background-color: #fef3c7; color: #92400e; }
+
+        .btn-zimrah {
+            background-color: var(--zimrah-primary);
+            color: #ffffff;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .btn-zimrah:hover {
+            background-color: var(--zimrah-accent);
+            color: #ffffff;
+            box-shadow: 0 4px 8px rgba(4, 120, 87, 0.25);
+        }
+
+        .btn-zimrah-gold {
+            background-color: var(--zimrah-gold);
+            color: #ffffff;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.2rem;
+        }
+
+        .btn-zimrah-gold:hover {
+            background-color: #b45309;
+            color: #ffffff;
+        }
+
+        .table-custom th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: none;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <nav class="portal-navbar navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <!-- Brand & Logos -->
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'portal_dashboard' %}">
+                <img src="{% static 'images/csi_diocese_emblem.png' %}" alt="CSI Emblem" style="height: 44px; margin-right: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                <img src="{% static 'images/zimrah_logo.png' %}" alt="ZIMRAH 2026" style="height: 44px; filter: brightness(1.2) drop-shadow(0 2px 4px rgba(0,0,0,0.4));">
+                <div class="d-none d-md-block ms-3 text-white border-start ps-3 border-secondary">
+                    <div class="fw-bold" style="font-size: 0.95rem; line-height: 1.2;">ZIMRAH 2026 <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">ADMIN PORTAL</span></div>
+                    <small class="text-white-50" style="font-size: 0.75rem;">Adoor Clergy District Youth Movement</small>
+                </div>
+            </a>
+
+            <!-- User Menu -->
+            <div class="d-flex align-items-center">
+                {% if request.user.is_authenticated %}
+                <div class="me-3 text-end d-none d-sm-block">
+                    <div class="text-white fw-bold" style="font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div>
+                        {% if request.user.role == 'SUPER_ADMIN' or request.user.is_superuser %}
+                            <span class="badge badge-role badge-super-admin">Super Admin</span>
+                        {% elif request.user.role == 'RESULT_ADMIN' %}
+                            <span class="badge badge-role badge-result-admin">Result Admin</span>
+                        {% elif request.user.role == 'PUBLISHER' %}
+                            <span class="badge badge-role badge-publisher">Publisher</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Staff</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'portal_logout' %}" class="btn btn-outline-light btn-sm px-3" title="Logout">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace Layout -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <div class="col-lg-2 col-md-3 d-none d-md-block portal-sidebar py-3 px-2">
+                <div class="sidebar-section-title px-3 py-1 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">Navigation</div>
+                <a href="{% url 'portal_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'portal_dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a href="{% url 'portal_church_list' %}" class="sidebar-link {% if 'church' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-building"></i> Churches
+                </a>
+                <a href="{% url 'portal_participant_list' %}" class="sidebar-link {% if 'participant' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-people"></i> Participants
+                </a>
+                <a href="{% url 'portal_event_list' %}" class="sidebar-link {% if 'event' in request.resolver_match.url_name and 'registration' not in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-trophy"></i> Events (34)
+                </a>
+                <a href="{% url 'portal_registration_list' %}" class="sidebar-link {% if 'registration' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-card-checklist"></i> Registrations
+                </a>
+
+                <div class="sidebar-section-title px-3 pt-4 pb-1 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">Advanced</div>
+                {% if request.user.is_superuser %}
+                <a href="/admin/" target="_blank" class="sidebar-link text-secondary">
+                    <i class="bi bi-gear-fill"></i> Django Admin <i class="bi bi-box-arrow-up-right ms-auto" style="font-size: 0.8rem;"></i>
+                </a>
+                {% endif %}
+                <a href="{% url 'portal_participant_import' %}" class="sidebar-link text-secondary">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> CSV Bulk Import
+                </a>
+            </div>
+
+            <!-- Content Area -->
+            <main class="col-lg-10 col-md-9 ms-sm-auto px-md-4 py-4">
+                <!-- Mobile Navigation Bar -->
+                <div class="d-md-none mb-3">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{% url 'portal_dashboard' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-speedometer2"></i></a>
+                        <a href="{% url 'portal_church_list' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-building"></i></a>
+                        <a href="{% url 'portal_participant_list' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-people"></i></a>
+                        <a href="{% url 'portal_event_list' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-trophy"></i></a>
+                        <a href="{% url 'portal_registration_list' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-card-checklist"></i></a>
+                    </div>
+                </div>
+
+                <!-- Flash Notification Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                            {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>{% endif %}
+                            {% if message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-exclamation-triangle-fill me-2"></i>{% endif %}
+                            {% if message.tags == 'warning' %}<i class="bi bi-exclamation-circle-fill me-2"></i>{% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

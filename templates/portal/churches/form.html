@@ -1,0 +1,97 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-building-gear text-success me-2"></i>{{ title }}</h4>
+            <a href="{% url 'portal_church_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Churches
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+            <form method="POST" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">
+                        {% for err in form.non_field_errors %}{{ err }}<br>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-secondary">Church Code <span class="text-danger">*</span></label>
+                        {{ form.code }}
+                        {% if form.code.errors %}<div class="text-danger small mt-1">{{ form.code.errors.0 }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">Unique code (e.g. CH01)</small>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold text-secondary">Church Name (English) <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold text-secondary">Church Name (Malayalam)</label>
+                        {{ form.name_malayalam }}
+                        {% if form.name_malayalam.errors %}<div class="text-danger small mt-1">{{ form.name_malayalam.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">District / Clergy Council</label>
+                        {{ form.district }}
+                        {% if form.district.errors %}<div class="text-danger small mt-1">{{ form.district.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Vicar / Parish Priest</label>
+                        {{ form.vicar_name }}
+                        {% if form.vicar_name.errors %}<div class="text-danger small mt-1">{{ form.vicar_name.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Youth Leader / Contact Person</label>
+                        {{ form.youth_leader_name }}
+                        {% if form.youth_leader_name.errors %}<div class="text-danger small mt-1">{{ form.youth_leader_name.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Contact Phone</label>
+                        {{ form.contact_phone }}
+                        {% if form.contact_phone.errors %}<div class="text-danger small mt-1">{{ form.contact_phone.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold text-secondary">Contact Email</label>
+                        {{ form.contact_email }}
+                        {% if form.contact_email.errors %}<div class="text-danger small mt-1">{{ form.contact_email.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="form-check form-switch mt-2">
+                            {{ form.is_active }}
+                            <label class="form-check-label fw-semibold text-dark" for="{{ form.is_active.id_for_label }}">
+                                Church Active for Kalolsavam Participation
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'portal_church_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-zimrah px-4">
+                        <i class="bi bi-check2-circle me-1"></i> Save Church
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'portal/base_portal.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-speedometer2 text-success me-2"></i>Administration Dashboard
+        </h3>
+        <p class="text-muted small mb-0">{{ active_edition.name }} | {{ active_edition.theme }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'portal_registration_add' %}" class="btn btn-zimrah">
+            <i class="bi bi-person-plus-fill me-1"></i> Register Individual
+        </a>
+        <a href="{% url 'portal_registration_group_add' %}" class="btn btn-zimrah-gold">
+            <i class="bi bi-people-fill me-1"></i> Register Group Team
+        </a>
+    </div>
+</div>
+
+<!-- Primary Metric Cards -->
+<div class="row g-3 mb-4">
+    <!-- Total Churches -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stat p-3 bg-white border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Total Churches</div>
+                    <h2 class="fw-bold text-dark mb-0">{{ total_churches }}</h2>
+                    <small class="text-success"><i class="bi bi-check-circle me-1"></i>{{ active_churches }} Active</small>
+                </div>
+                <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+                    <i class="bi bi-building fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Participants -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stat p-3 bg-white border-start border-4 border-success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Total Participants</div>
+                    <h2 class="fw-bold text-dark mb-0">{{ total_participants }}</h2>
+                    <small class="text-muted"><i class="bi bi-card-checklist me-1"></i>{{ total_registrations }} entries</small>
+                </div>
+                <div class="bg-success-subtle text-success p-3 rounded-circle">
+                    <i class="bi bi-people fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Competitions -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stat p-3 bg-white border-start border-4 border-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Total Events</div>
+                    <h2 class="fw-bold text-dark mb-0">{{ total_events }}</h2>
+                    <small class="text-warning-emphasis"><i class="bi bi-tag me-1"></i>4 Divisions</small>
+                </div>
+                <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+                    <i class="bi bi-trophy fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Status -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stat p-3 bg-white border-start border-4 border-danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Results Status</div>
+                    <h2 class="fw-bold text-dark mb-0">{{ published_results }} <span class="fs-6 fw-normal text-muted">/ {{ total_events }}</span></h2>
+                    <small class="text-danger fw-semibold"><i class="bi bi-hourglass-split me-1"></i>{{ pending_results }} Pending</small>
+                </div>
+                <div class="bg-danger-subtle text-danger p-3 rounded-circle">
+                    <i class="bi bi-clipboard-data fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Categorization Metrics -->
+<div class="row g-3 mb-4">
+    <!-- Literary vs Stage -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+            <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-pie-chart-fill text-success me-2"></i>Event Categories & Types</h6>
+            <div class="row text-center g-2">
+                <div class="col-3">
+                    <div class="p-2 border rounded-3 bg-light">
+                        <div class="text-muted small">Literary</div>
+                        <h4 class="fw-bold text-dark mb-0">{{ literary_events }}</h4>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="p-2 border rounded-3 bg-light">
+                        <div class="text-muted small">Stage</div>
+                        <h4 class="fw-bold text-dark mb-0">{{ stage_events }}</h4>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="p-2 border rounded-3 bg-light">
+                        <div class="text-muted small">Individual</div>
+                        <h4 class="fw-bold text-dark mb-0">{{ individual_events }}</h4>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="p-2 border rounded-3 bg-light">
+                        <div class="text-muted small">Group</div>
+                        <h4 class="fw-bold text-dark mb-0">{{ group_events }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+            <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Operations</h6>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'portal_participant_add' %}" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-person-plus me-1"></i> Add Participant
+                </a>
+                <a href="{% url 'portal_church_add' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-building-add me-1"></i> Add Church
+                </a>
+                <a href="{% url 'portal_participant_import' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-file-earmark-arrow-up me-1"></i> Import CSV
+                </a>
+                <a href="{% url 'portal_event_list' %}" class="btn btn-outline-warning btn-sm text-dark">
+                    <i class="bi bi-list-check me-1"></i> View All Events
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Registrations & Audit Activity -->
+<div class="row g-4">
+    <!-- Recent Registrations -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-clock-history text-primary me-2"></i>Recent Event Registrations
+                </h6>
+                <a href="{% url 'portal_registration_list' %}" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Chest</th>
+                            <th>Participant / Team</th>
+                            <th>Event</th>
+                            <th>Church</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in recent_registrations %}
+                        <tr>
+                            <td><span class="badge bg-secondary-subtle text-secondary font-monospace">#{{ reg.chest_number }}</span></td>
+                            <td class="fw-semibold">
+                                {% if reg.participant %}
+                                    {{ reg.participant.name }}
+                                {% else %}
+                                    <span class="text-primary">{{ reg.group_name }}</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ reg.event.code }}</span> {{ reg.event.name|truncatechars:20 }}</td>
+                            <td><small class="text-muted">{{ reg.church.code }}</small></td>
+                            <td><small class="text-muted">{{ reg.registered_at|timesince }} ago</small></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">No registrations recorded yet. Use the buttons above to register participants!</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Audit Logs -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-shield-check text-success me-2"></i>Recent Admin Activity
+                </h6>
+            </div>
+            <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                {% for log in recent_audits %}
+                <div class="list-group-item px-3 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="fw-bold text-dark">{{ log.action }}</small>
+                        <small class="text-muted" style="font-size: 0.72rem;">{{ log.timestamp|timesince }} ago</small>
+                    </div>
+                    <div class="small text-muted">{{ log.object_repr|default:log.model_name|truncatechars:35 }}</div>
+                    <div class="text-end" style="font-size: 0.72rem; color: #94a3b8;">by {{ log.user.username|default:'System' }}</div>
+                </div>
+                {% empty %}
+                <div class="p-3 text-center text-muted small">No administrative activity recorded yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

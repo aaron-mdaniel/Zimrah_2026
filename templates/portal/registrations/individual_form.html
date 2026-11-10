@@ -1,0 +1,111 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Register Individual Contestant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-person-plus-fill text-success me-2"></i>Register Individual Contestant</h4>
+            <a href="{% url 'portal_registration_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+            <form method="POST" novalidate id="individualRegForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">
+                        {% for err in form.non_field_errors %}{{ err }}<br>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold text-secondary">Festival Edition</label>
+                        {{ form.edition }}
+                        {% if form.edition.errors %}<div class="text-danger small mt-1">{{ form.edition.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold text-secondary">Individual Competition Event <span class="text-danger">*</span></label>
+                        {{ form.event }}
+                        {% if form.event.errors %}<div class="text-danger small mt-1">{{ form.event.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Representing Church <span class="text-danger">*</span></label>
+                        {{ form.church }}
+                        {% if form.church.errors %}<div class="text-danger small mt-1">{{ form.church.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Select Church Participant <span class="text-danger">*</span></label>
+                        {{ form.participant }}
+                        {% if form.participant.errors %}<div class="text-danger small mt-1">{{ form.participant.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Event Chest Number</label>
+                        {{ form.chest_number }}
+                        {% if form.chest_number.errors %}<div class="text-danger small mt-1">{{ form.chest_number.errors.0 }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">Leave blank to use participant's assigned chest number automatically.</small>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'portal_registration_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-zimrah px-4">
+                        <i class="bi bi-check2-circle me-1"></i> Complete Registration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Dynamic participant filtering based on selected church
+    const churchSelect = document.getElementById('id_church_select');
+    const participantSelect = document.getElementById('id_participant_select');
+    const chestInput = document.getElementById('id_chest_number');
+
+    if (churchSelect && participantSelect) {
+        churchSelect.addEventListener('change', function() {
+            const churchId = this.value;
+            if (!churchId) return;
+
+            participantSelect.innerHTML = '<option value="">Loading church participants...</option>';
+
+            fetch(`/portal/api/church/${churchId}/participants/`)
+                .then(res => res.json())
+                .then(data => {
+                    participantSelect.innerHTML = '<option value="">-- Choose Participant --</option>';
+                    data.participants.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = `#${p.chest_number} - ${p.name} (${p.gender}, ${p.age_category})`;
+                        opt.setAttribute('data-chest', p.chest_number);
+                        participantSelect.appendChild(opt);
+                    });
+                })
+                .catch(() => {
+                    participantSelect.innerHTML = '<option value="">Error loading participants</option>';
+                });
+        });
+
+        participantSelect.addEventListener('change', function() {
+            const selectedOpt = participantSelect.options[participantSelect.selectedIndex];
+            if (selectedOpt && selectedOpt.hasAttribute('data-chest') && chestInput && !chestInput.value) {
+                chestInput.value = selectedOpt.getAttribute('data-chest');
+            }
+        });
+    }
+</script>
+{% endblock %}

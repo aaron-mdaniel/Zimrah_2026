@@ -1,0 +1,120 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Churches{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-building text-success me-2"></i>Church Management</h3>
+        <p class="text-muted small mb-0">{{ total_churches }} Parishes Registered in Adoor Clergy District</p>
+    </div>
+    {% if request.user.role == 'SUPER_ADMIN' or request.user.is_superuser %}
+    <a href="{% url 'portal_church_add' %}" class="btn btn-zimrah">
+        <i class="bi bi-plus-lg me-1"></i> Add Church
+    </a>
+    {% endif %}
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-7">
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by church code, English or Malayalam name, vicar...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-zimrah w-100">Filter</button>
+            {% if query or status_filter != 'all' %}
+                <a href="{% url 'portal_church_list' %}" class="btn btn-outline-secondary">Reset</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Churches Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Church Name</th>
+                    <th>Malayalam Title</th>
+                    <th>Vicar / Contact</th>
+                    <th class="text-center">Participants</th>
+                    <th class="text-center">Registrations</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for church in page_obj %}
+                <tr>
+                    <td><span class="badge bg-primary-subtle text-primary fw-bold font-monospace">{{ church.code }}</span></td>
+                    <td class="fw-semibold">
+                        <a href="{% url 'portal_church_detail' church.pk %}" class="text-decoration-none text-dark hover-underline">
+                            {{ church.name }}
+                        </a>
+                    </td>
+                    <td class="text-muted">{{ church.name_malayalam|default:"-" }}</td>
+                    <td>
+                        <div class="small fw-semibold">{{ church.vicar_name|default:"Not assigned" }}</div>
+                        {% if church.contact_phone %}<small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ church.contact_phone }}</small>{% endif %}
+                    </td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">{{ church.participant_count }}</span></td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">{{ church.registration_count }}</span></td>
+                    <td>
+                        {% if church.is_active %}
+                            <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'portal_church_detail' church.pk %}" class="btn btn-outline-secondary btn-sm" title="View Church">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        {% if request.user.role == 'SUPER_ADMIN' or request.user.is_superuser %}
+                        <a href="{% url 'portal_church_edit' church.pk %}" class="btn btn-outline-primary btn-sm ms-1" title="Edit Church">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">No churches found matching your query.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} churches</small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&status={{ status_filter }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&status={{ status_filter }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

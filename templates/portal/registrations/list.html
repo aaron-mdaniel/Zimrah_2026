@@ -1,0 +1,121 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Event Registrations{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-card-checklist text-success me-2"></i>Registration Management</h3>
+        <p class="text-muted small mb-0">{{ total_registrations }} Total Contestant Entries Across All 34 Competitions</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'RESULT_ADMIN' or request.user.is_superuser %}
+        <a href="{% url 'portal_registration_add' %}" class="btn btn-zimrah">
+            <i class="bi bi-person-plus-fill me-1"></i> Register Individual
+        </a>
+        <a href="{% url 'portal_registration_group_add' %}" class="btn btn-zimrah-gold">
+            <i class="bi bi-people-fill me-1"></i> Register Group Team
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search & Category Filter -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search event code or title...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="type" class="form-select">
+                <option value="">All Types (Individual & Group)</option>
+                <option value="INDIVIDUAL" {% if type_filter == 'INDIVIDUAL' %}selected{% endif %}>Individual Competitions Only</option>
+                <option value="GROUP" {% if type_filter == 'GROUP' %}selected{% endif %}>Group Competitions Only</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if category_id == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-zimrah w-100">Filter</button>
+            {% if query or type_filter or category_id %}
+                <a href="{% url 'portal_registration_list' %}" class="btn btn-outline-secondary">Reset</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Event-Wise Registration Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Competition (Malayalam / English)</th>
+                    <th>Category</th>
+                    <th>Division</th>
+                    <th>Type</th>
+                    <th class="text-center">Enrolled Entries</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in events %}
+                <tr>
+                    <td><span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold fs-6">{{ ev.code }}</span></td>
+                    <td>
+                        <a href="{% url 'portal_registration_event_detail' ev.pk %}" class="text-decoration-none text-dark fw-bold hover-underline">
+                            {{ ev.name_malayalam }}
+                        </a>
+                        <small class="text-muted d-block">{{ ev.name }}</small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ ev.category.name }}</span></td>
+                    <td><small class="text-secondary fw-semibold">Div {{ ev.division.division_number }}</small></td>
+                    <td>
+                        {% if ev.event_type == 'INDIVIDUAL' %}
+                            <span class="badge bg-info-subtle text-info">Solo</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning">Group</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if ev.reg_count > 0 %}
+                            <span class="badge bg-success-subtle text-success fs-6 fw-bold px-3 py-1">{{ ev.reg_count }} Registered</span>
+                        {% else %}
+                            <span class="badge bg-light text-muted border">0 Entries</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'portal_registration_event_detail' ev.pk %}" class="btn btn-outline-secondary btn-sm" title="View Registered List">
+                            <i class="bi bi-list-check me-1"></i> Roster
+                        </a>
+                        {% if ev.event_type == 'INDIVIDUAL' %}
+                            <a href="{% url 'portal_registration_add' %}?event={{ ev.pk }}" class="btn btn-zimrah btn-sm ms-1" title="Register Solo">
+                                <i class="bi bi-person-plus"></i>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'portal_registration_group_add' %}?event={{ ev.pk }}" class="btn btn-zimrah-gold btn-sm ms-1" title="Register Group">
+                                <i class="bi bi-people"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">No events found matching your query.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

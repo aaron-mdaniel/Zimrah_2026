@@ -1,0 +1,141 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Participants{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-people text-success me-2"></i>Participant Management</h3>
+        <p class="text-muted small mb-0">{{ total_participants }} Enrolled Participants Across All Parishes</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'portal_participant_import' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Bulk Import CSV
+        </a>
+        {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'RESULT_ADMIN' or request.user.is_superuser %}
+        <a href="{% url 'portal_participant_add' %}" class="btn btn-zimrah">
+            <i class="bi bi-person-plus me-1"></i> Add Participant
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search chest number (e.g. 001), name, or phone...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="church" class="form-select">
+                <option value="">All Churches</option>
+                {% for ch in churches %}
+                <option value="{{ ch.id }}" {% if church_id == ch.id|stringformat:"s" %}selected{% endif %}>
+                    {{ ch.code }} - {{ ch.name|truncatechars:28 }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="age" class="form-select">
+                <option value="">All Categories</option>
+                <option value="JUNIOR" {% if age_filter == 'JUNIOR' %}selected{% endif %}>Junior</option>
+                <option value="SENIOR" {% if age_filter == 'SENIOR' %}selected{% endif %}>Senior</option>
+                <option value="OPEN" {% if age_filter == 'OPEN' %}selected{% endif %}>Open</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-zimrah w-100">Filter</button>
+            {% if query or church_id or age_filter %}
+                <a href="{% url 'portal_participant_list' %}" class="btn btn-outline-secondary">Reset</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Participants Table -->
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Chest No.</th>
+                    <th>Participant Name</th>
+                    <th>Malayalam Name</th>
+                    <th>Gender</th>
+                    <th>Representing Church</th>
+                    <th>Age Category</th>
+                    <th>Contact Phone</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in page_obj %}
+                <tr>
+                    <td>
+                        <!-- Preserve chest number leading zeros visually -->
+                        <span class="badge bg-secondary-subtle text-secondary font-monospace fw-bold fs-6">
+                            #{{ p.chest_number }}
+                        </span>
+                    </td>
+                    <td class="fw-semibold">
+                        <a href="{% url 'portal_participant_detail' p.pk %}" class="text-decoration-none text-dark hover-underline">
+                            {{ p.name }}
+                        </a>
+                    </td>
+                    <td class="text-muted">{{ p.name_malayalam|default:"-" }}</td>
+                    <td>{{ p.get_gender_display }}</td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ p.church.code }}</span>
+                        <small class="text-muted d-block">{{ p.church.name|truncatechars:25 }}</small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ p.get_age_category_display }}</span></td>
+                    <td><small class="text-muted">{{ p.phone|default:"-" }}</small></td>
+                    <td class="text-end">
+                        <a href="{% url 'portal_participant_detail' p.pk %}" class="btn btn-outline-secondary btn-sm" title="View Profile">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'RESULT_ADMIN' or request.user.is_superuser %}
+                        <a href="{% url 'portal_participant_edit' p.pk %}" class="btn btn-outline-primary btn-sm ms-1" title="Edit Participant">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        No participants found matching your criteria.
+                        <div class="mt-2">
+                            <a href="{% url 'portal_participant_add' %}" class="btn btn-outline-success btn-sm me-2">Add Participant</a>
+                            <a href="{% url 'portal_participant_import' %}" class="btn btn-outline-secondary btn-sm">Import via CSV</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} participants</small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&church={{ church_id }}&age={{ age_filter }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&church={{ church_id }}&age={{ age_filter }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
