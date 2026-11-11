@@ -1,0 +1,59 @@
+# Render Infrastructure Blueprint for ZIMRAH 2026
+# CSI Madhya Kerala Diocese, Adoor Clergy District Youth Movement
+# Result Management and Championship Ranking System
+
+databases:
+  - name: zimrah-db
+    databaseName: zimrah_db
+    user: zimrah_user
+    plan: starter
+    region: frankfurt # or singapore / oregon
+    postgresMajorVersion: 16
+
+services:
+  - type: web
+    name: zimrah-backend
+    runtime: python
+    plan: starter
+    region: frankfurt # same region as db for low latency
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn zimrah.wsgi:application --workers 4 --threads 2 --timeout 60"
+    healthCheckPath: "/api/v1/live/summary/"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zimrah-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com,zimrah2026.example.com,api.zimrah2026.example.com,zimrah.vercel.app"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com,https://zimrah2026.example.com,https://api.zimrah2026.example.com,https://*.vercel.app"
+      - key: CORS_ALLOW_ALL_ORIGINS
+        value: "False"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://zimrah2026.example.com,https://zimrah.vercel.app,https://*.vercel.app"
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: SECURE_HSTS
+        value: "True"
+      - key: SESSION_COOKIE_SECURE
+        value: "True"
+      - key: CSRF_COOKIE_SECURE
+        value: "True"
+      - key: CONN_MAX_AGE
+        value: "0"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: DJANGO_LOG_LEVEL
+        value: "INFO"
+      # Optional: set ADMIN_USERNAME and ADMIN_PASSWORD in Render Dashboard
+      # - key: ADMIN_USERNAME
+      #   value: "admin"
+      # - key: ADMIN_PASSWORD
+      #   sync: false

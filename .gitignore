@@ -12,11 +12,21 @@ ENV/
 # Environment Variables & Secrets
 .env
 *.local
+*.env.*
+!.env.example
 
 # Django Media & Static collected
 staticfiles/
 media/
 *.sqlite3
+
+# Logs & Database Backups
+*.log
+*.sql
+*.dump
+*.tar.gz
+*.backup
+pg_dumps/
 
 # Operating System Files
 Thumbs.db
@@ -25,8 +35,13 @@ Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
 
-# IDEs
+# IDEs & Editors
 .idea/
 .vscode/
 *.sublime-project
 *.sublime-workspace
+
+# Testing & Coverage
+.coverage
+htmlcov/
+locust_report.html

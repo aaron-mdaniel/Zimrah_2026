@@ -12,8 +12,12 @@ from apps.championships.services import ChampionshipService
 from zimrah.cache_service import CacheService
 
 
+from django.core.cache import cache
+
+
 class Phase6SecurityAndPerformanceTestCase(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = Client()
 
         # Regular non-admin user

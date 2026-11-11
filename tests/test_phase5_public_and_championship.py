@@ -12,9 +12,12 @@ from apps.results.services import ResultService
 from apps.championships.models import PointLedger
 from apps.championships.services import ChampionshipService
 
+from django.core.cache import cache
+
 
 class Phase5PublicAndChampionshipTestCase(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = Client()
 
         # Users

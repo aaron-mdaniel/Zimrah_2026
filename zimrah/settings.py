@@ -7,6 +7,7 @@ CSI Madhya Kerala Diocese, Adoor Clergy District Youth Movement
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,6 +23,16 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
     if host.strip()
+]
+
+# CSRF Trusted Origins (crucial for HTTPS in Render/Vercel)
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        'CSRF_TRUSTED_ORIGINS',
+        'http://127.0.0.1:8000,http://localhost:8000'
+    ).split(',')
+    if origin.strip()
 ]
 
 # Application definition
@@ -81,24 +92,34 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'zimrah.wsgi.application'
 
-# Database Configuration (PostgreSQL)
-DB_NAME = os.getenv('DB_NAME', 'zimrah_db')
-DB_USER = os.getenv('DB_USER', 'postgres')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'password')
-DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
-DB_PORT = os.getenv('DB_PORT', '5432')
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
-        'CONN_MAX_AGE': int(os.getenv('CONN_MAX_AGE', '0')),
+# Database Configuration (PostgreSQL with DATABASE_URL support)
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=int(os.getenv('CONN_MAX_AGE', '0')),
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DB_NAME = os.getenv('DB_NAME', 'zimrah_db')
+    DB_USER = os.getenv('DB_USER', 'postgres')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'password')
+    DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
+    DB_PORT = os.getenv('DB_PORT', '5432')
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'CONN_MAX_AGE': int(os.getenv('CONN_MAX_AGE', '0')),
+        }
+    }
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
@@ -130,6 +151,17 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        if not DEBUG
+        else 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -147,24 +179,48 @@ REST_FRAMEWORK = {
 }
 
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True').lower() in ('true', '1')
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False').lower() in ('true', '1')
+cors_origins_env = os.getenv('CORS_ALLOWED_ORIGINS', '')
+if cors_origins_env:
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip() for origin in cors_origins_env.split(',') if origin.strip()
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        'http://127.0.0.1:8000',
+        'http://localhost:8000',
+        'http://localhost:3000',
+    ]
 
 # High-Performance Caching Configuration (Redis or In-Memory)
-CACHES = {
-    'default': {
-        'BACKEND': os.getenv(
-            'CACHE_BACKEND',
-            'django.core.cache.backends.locmem.LocMemCache'
-        ),
-        'LOCATION': os.getenv('CACHE_LOCATION', 'zimrah-cache'),
-        'TIMEOUT': int(os.getenv('CACHE_TIMEOUT', '300')),
-        'OPTIONS': {
-            'MAX_ENTRIES': 5000,
+REDIS_URL = os.getenv('REDIS_URL')
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+            'TIMEOUT': int(os.getenv('CACHE_TIMEOUT', '300')),
         }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': os.getenv(
+                'CACHE_BACKEND',
+                'django.core.cache.backends.locmem.LocMemCache'
+            ),
+            'LOCATION': os.getenv('CACHE_LOCATION', 'zimrah-cache'),
+            'TIMEOUT': int(os.getenv('CACHE_TIMEOUT', '300')),
+            'OPTIONS': {
+                'MAX_ENTRIES': 5000,
+            }
+        }
+    }
 
-# Production-Grade Security Hardening
+# Production-Grade Security Hardening & Proxy Support
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1')
+
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -173,3 +229,49 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 86400  # 24 hours
 CSRF_COOKIE_HTTPONLY = False  # Allows frontend JS to read for AJAX headers
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() in ('true', '1')
+    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() in ('true', '1')
+    if os.getenv('SECURE_HSTS', 'False').lower() in ('true', '1'):
+        SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
+
+# Production Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} [{name}:{lineno}] {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': os.getenv('LOG_LEVEL', 'INFO'),
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'zimrah': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}

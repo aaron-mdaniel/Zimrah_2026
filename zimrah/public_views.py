@@ -14,12 +14,14 @@ from zimrah.cache_service import CacheService
 
 
 def get_current_edition():
-    cached = CacheService.get('edition', 'current')
-    if cached is not None:
-        return cached
+    cached_id = CacheService.get('edition', 'current_id')
+    if cached_id:
+        edition = Edition.objects.filter(id=cached_id, is_active=True).first()
+        if edition:
+            return edition
     edition = Edition.objects.filter(is_active=True).first() or Edition.objects.order_by('-year').first()
     if edition:
-        CacheService.set('edition', 'current', edition, timeout=600)
+        CacheService.set('edition', 'current_id', edition.id, timeout=300)
     return edition
 
 
