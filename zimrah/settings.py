@@ -24,6 +24,10 @@ ALLOWED_HOSTS = [
     for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
     if host.strip()
 ]
+# Auto-permit Render & Vercel subdomains to avoid common deployment 400 Bad Request
+for domain in ['.onrender.com', '.vercel.app', 'localhost', '127.0.0.1']:
+    if domain not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(domain)
 
 # CSRF Trusted Origins (crucial for HTTPS in Render/Vercel)
 CSRF_TRUSTED_ORIGINS = [
@@ -34,6 +38,9 @@ CSRF_TRUSTED_ORIGINS = [
     ).split(',')
     if origin.strip()
 ]
+for origin in ['https://*.onrender.com', 'https://*.vercel.app']:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Application definition
 INSTALLED_APPS = [
@@ -191,6 +198,11 @@ else:
         'http://localhost:8000',
         'http://localhost:3000',
     ]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+    r"^https://.*\.onrender\.com$",
+]
 
 # High-Performance Caching Configuration (Redis or In-Memory)
 REDIS_URL = os.getenv('REDIS_URL')
