@@ -143,6 +143,8 @@ class ResultEntry(models.Model):
             models.Index(fields=["event_result", "position"]),
             models.Index(fields=["church"]),
             models.Index(fields=["chest_number"]),
+            models.Index(fields=["position"]),
+            models.Index(fields=["grade"]),
         ]
 
     def save(self, *args, **kwargs):

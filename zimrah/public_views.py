@@ -10,10 +10,17 @@ from apps.results.models import EventResult, ResultEntry
 from apps.churches.models import Church
 from apps.participants.models import Participant
 from apps.championships.services import ChampionshipService
+from zimrah.cache_service import CacheService
 
 
 def get_current_edition():
-    return Edition.objects.filter(is_active=True).first() or Edition.objects.order_by('-year').first()
+    cached = CacheService.get('edition', 'current')
+    if cached is not None:
+        return cached
+    edition = Edition.objects.filter(is_active=True).first() or Edition.objects.order_by('-year').first()
+    if edition:
+        CacheService.set('edition', 'current', edition, timeout=600)
+    return edition
 
 
 def public_home_view(request):

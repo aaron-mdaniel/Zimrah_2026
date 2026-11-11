@@ -52,6 +52,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'zimrah.security_middleware.SecurityHeadersMiddleware',
+    'zimrah.security_middleware.RateLimitMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -94,7 +96,7 @@ DATABASES = {
         'PASSWORD': DB_PASSWORD,
         'HOST': DB_HOST,
         'PORT': DB_PORT,
-        'CONN_MAX_AGE': 60,
+        'CONN_MAX_AGE': int(os.getenv('CONN_MAX_AGE', '0')),
     }
 }
 
@@ -146,3 +148,28 @@ REST_FRAMEWORK = {
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True').lower() in ('true', '1')
+
+# High-Performance Caching Configuration (Redis or In-Memory)
+CACHES = {
+    'default': {
+        'BACKEND': os.getenv(
+            'CACHE_BACKEND',
+            'django.core.cache.backends.locmem.LocMemCache'
+        ),
+        'LOCATION': os.getenv('CACHE_LOCATION', 'zimrah-cache'),
+        'TIMEOUT': int(os.getenv('CACHE_TIMEOUT', '300')),
+        'OPTIONS': {
+            'MAX_ENTRIES': 5000,
+        }
+    }
+}
+
+# Production-Grade Security Hardening
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 86400  # 24 hours
+CSRF_COOKIE_HTTPONLY = False  # Allows frontend JS to read for AJAX headers
+CSRF_COOKIE_SAMESITE = 'Lax'

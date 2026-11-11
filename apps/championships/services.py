@@ -6,6 +6,7 @@ from apps.championships.models import PointLedger
 from apps.churches.models import Church
 from apps.participants.models import Participant
 from apps.events.models import Edition
+from zimrah.cache_service import CacheService
 
 
 class ChampionshipService:
@@ -37,6 +38,11 @@ class ChampionshipService:
 
         if not edition:
             return []
+
+        cache_id = f"{edition.id}:{search or ''}"
+        cached = CacheService.get('church_standings', cache_id)
+        if cached is not None:
+            return cached
 
         # Annotate all active churches with their active church-target point sums and award counts
         qs = Church.objects.filter(is_active=True)
@@ -112,6 +118,7 @@ class ChampionshipService:
                 'events_count': church.events_count,
             })
 
+        CacheService.set('church_standings', cache_id, results, timeout=300)
         return results
 
     @staticmethod
@@ -125,6 +132,11 @@ class ChampionshipService:
 
         if not edition:
             return []
+
+        cache_id = f"{edition.id}:{category or ''}:{search or ''}:{only_with_points}"
+        cached = CacheService.get('individual_standings', cache_id)
+        if cached is not None:
+            return cached
 
         qs = Participant.objects.filter(edition=edition).select_related('church')
 
@@ -217,6 +229,7 @@ class ChampionshipService:
                 'events_count': p.events_count,
             })
 
+        CacheService.set('individual_standings', cache_id, results, timeout=300)
         return results
 
     @staticmethod
@@ -229,6 +242,11 @@ class ChampionshipService:
 
         if not edition:
             edition = ChampionshipService.get_default_edition()
+
+        cache_id = f"{edition.id if edition else 'none'}"
+        cached = CacheService.get('live_summary', cache_id)
+        if cached is not None:
+            return cached
 
         total_events = Event.objects.filter(edition=edition).count()
         published_results = EventResult.objects.filter(
@@ -263,7 +281,7 @@ class ChampionshipService:
                 'winner': winner_str
             })
 
-        return {
+        summary_data = {
             'edition_name': edition.name if edition else "ZIMRAH 2026",
             'total_events': total_events,
             'published_results': published_results,
@@ -273,3 +291,5 @@ class ChampionshipService:
             'top_individuals': top_individuals,
             'latest_results': latest_list
         }
+        CacheService.set('live_summary', cache_id, summary_data, timeout=60)
+        return summary_data

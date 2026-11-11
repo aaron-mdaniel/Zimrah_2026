@@ -9,6 +9,7 @@ from apps.churches.models import Church
 from apps.participants.models import Participant
 from apps.championships.models import PointLedger
 from apps.audit.models import AuditLog
+from zimrah.cache_service import CacheService
 
 
 def sanitize_decimal(value, default=Decimal('0.00')):
@@ -213,6 +214,9 @@ class ResultService:
             changes={'status': {'old': 'DRAFT', 'new': 'PUBLISHED'}, 'entries_published': result.entries.count()}
         )
 
+        # Invalidate public and championship cache
+        CacheService.invalidate_all()
+
         return result
 
     @staticmethod
@@ -253,6 +257,9 @@ class ResultService:
                 'prev_published_at': prev_published_at
             }
         )
+
+        # Invalidate public and championship cache
+        CacheService.invalidate_all()
 
         return result
 
@@ -349,5 +356,8 @@ class ResultService:
                 'new_scores': new_scores
             }
         )
+
+        # Invalidate public and championship cache
+        CacheService.invalidate_all()
 
         return result
