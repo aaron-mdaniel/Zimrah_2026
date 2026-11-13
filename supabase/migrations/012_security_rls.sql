@@ -3,14 +3,27 @@
 -- ==============================================================================
 
 -- 0. Ensure auth.uid() and Supabase roles exist for standalone / local testing compatibility
-CREATE OR REPLACE FUNCTION auth.uid()
-RETURNS UUID AS $$
+DO $$
 BEGIN
-    RETURN NULLIF(current_setting('request.jwt.claim.sub', true), '')::UUID;
-EXCEPTION
-    WHEN OTHERS THEN RETURN NULL;
-END;
-$$ LANGUAGE plpgsql STABLE;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_proc p 
+        JOIN pg_namespace n ON p.pronamespace = n.oid 
+        WHERE n.nspname = 'auth' AND p.proname = 'uid'
+    ) THEN
+        BEGIN
+            CREATE OR REPLACE FUNCTION auth.uid()
+            RETURNS UUID AS $f$
+            BEGIN
+                RETURN NULLIF(current_setting('request.jwt.claim.sub', true), '')::UUID;
+            EXCEPTION
+                WHEN OTHERS THEN RETURN NULL;
+            END;
+            $f$ LANGUAGE plpgsql STABLE;
+        EXCEPTION WHEN insufficient_privilege THEN
+            NULL;
+        END;
+    END IF;
+END $$;
 
 DO $$
 BEGIN
@@ -20,12 +33,19 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
         CREATE ROLE authenticated NOLOGIN;
     END IF;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
 END $$;
 
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated;
+DO $$
+BEGIN
+    GRANT USAGE ON SCHEMA public TO anon, authenticated;
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+    GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 
 -- 1. Helper Security Functions (SECURITY DEFINER, explicit search_path)
 -- Bypasses RLS to avoid recursion when evaluating policies
@@ -164,11 +184,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
 
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW
-    EXECUTE FUNCTION public.handle_new_user();
+DO $$
+BEGIN
+    DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+    CREATE TRIGGER on_auth_user_created
+        AFTER INSERT ON auth.users
+        FOR EACH ROW
+        EXECUTE FUNCTION public.handle_new_user();
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 
 -- ==============================================================================
 -- 5. ENABLE ROW LEVEL SECURITY (RLS) ON ALL TABLES
