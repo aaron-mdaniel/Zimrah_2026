@@ -23,6 +23,7 @@ media/
 # Logs & Database Backups
 *.log
 *.sql
+!supabase/**/*.sql
 *.dump
 *.tar.gz
 *.backup
