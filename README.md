@@ -97,9 +97,24 @@ Zimrah/
 │   ├── images/            # PWA icons (192x192, 512x512 maskable), logos, banner
 │   ├── manifest.json      # Progressive Web App manifest
 │   └── sw.js              # Service worker with offline shell and network-first scoring
+├── public/                # React static assets, logos, and PWA manifest
+├── src/                   # React 18 + TypeScript + Vite Single Page Application
+│   ├── app/               # Providers, router configuration, App root
+│   ├── components/        # Reusable UI primitives (shadcn), layouts, forms, tables
+│   ├── features/          # 8 Domain feature modules matching Django apps
+│   ├── services/          # ResultService, ChampionshipService, CacheService, AuditService
+│   ├── contexts/          # Auth and global application state
+│   ├── hooks/             # Custom React hooks (useAuth, useDebounce, etc.)
+│   ├── lib/               # Supabase JS client, TanStack Query client, utility helpers
+│   ├── pages/             # Public portal & Admin portal route views
+│   ├── routes/            # Route constants and navigational paths
+│   ├── styles/            # Tailwind CSS globals and ZIMRAH theme tokens
+│   ├── types/             # TypeScript data contracts and Supabase schema types
+│   └── utils/             # Scoring calculations and string/date formatters
+├── supabase/              # Supabase PostgreSQL migrations and seed scripts
 ├── templates/
-│   ├── portal/            # Administrative portal templates (Bootstrap 5 dashboard & CRUD)
-│   └── public/            # Public web templates (Home, Results, Championships, Search)
+│   ├── portal/            # Legacy Django administrative portal templates
+│   └── public/            # Legacy Django public web templates
 ├── tests/                 # 58 comprehensive unit, integration, and security test cases
 ├── zimrah/
 │   ├── cache_service.py   # Atomic generation-based caching layer
@@ -110,14 +125,40 @@ Zimrah/
 │   ├── settings.py        # Production-ready Django configuration with DATABASE_URL
 │   ├── urls.py            # Root URL configuration and API router
 │   └── wsgi.py            # WSGI entrypoint for Gunicorn
-├── .env.example           # Complete production environment variables template
-├── .gitignore             # Exclusion rules for secrets, dumps, staticfiles, and venv
+├── .env.example           # Environment variables template (Django & Vite Supabase)
+├── .gitignore             # Exclusion rules for secrets, dumps, staticfiles, node_modules, and venv
+├── package.json           # Frontend dependencies and npm scripts
+├── tsconfig.json          # TypeScript strict compiler configuration
+├── vite.config.ts         # Vite build and Workbox PWA configuration
+├── vercel.json            # Vercel Edge routing, SPA rewrites & security headers
 ├── build.sh               # Render production build and migration script
 ├── render.yaml            # Render Infrastructure as Code Blueprint
-├── vercel.json            # Vercel Edge CDN, caching headers & reverse proxy rules
 ├── locustfile.py          # Locust performance and load testing suite (100+ users)
 ├── requirements.txt       # Pinned production dependencies
 └── README.md              # This documentation
+```
+
+---
+
+## 4.1 React Frontend Development (Phase 1)
+
+The modernized Single Page Application and PWA is located in `src/` and built with Vite:
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start local development server (Vite HMR)
+npm run dev
+
+# 3. Type check with strict TypeScript
+npm run type-check
+
+# 4. Run ESLint code quality checks
+npm run lint
+
+# 5. Build for production (TypeScript + Vite + Workbox PWA)
+npm run build
 ```
 
 ---

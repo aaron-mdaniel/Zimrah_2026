@@ -1,36 +1,19 @@
 {
   "version": 2,
   "name": "zimrah-2026",
-  "framework": null,
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
   "rewrites": [
     {
-      "source": "/static/(.*)",
-      "destination": "https://zimrah-backend.onrender.com/static/$1"
-    },
-    {
-      "source": "/media/(.*)",
-      "destination": "https://zimrah-backend.onrender.com/media/$1"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "https://zimrah-backend.onrender.com/api/$1"
-    },
-    {
-      "source": "/portal/(.*)",
-      "destination": "https://zimrah-backend.onrender.com/portal/$1"
-    },
-    {
-      "source": "/admin/(.*)",
-      "destination": "https://zimrah-backend.onrender.com/admin/$1"
-    },
-    {
       "source": "/(.*)",
-      "destination": "https://zimrah-backend.onrender.com/$1"
+      "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/static/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -48,6 +31,39 @@
         {
           "key": "Service-Worker-Allowed",
           "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.upstash.io;"
         }
       ]
     }
