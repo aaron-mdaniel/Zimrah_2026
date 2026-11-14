@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { cacheService } from './cacheService';
 import { Church } from '@/types';
 
 export interface ChurchQueryParams {
@@ -37,14 +38,6 @@ function getLocalChurches(): Church[] {
     console.warn('LocalStorage church parse failed:', err);
   }
   return [...SEED_CHURCHES];
-}
-
-function saveLocalChurches(churches: Church[]) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(churches));
-  } catch (err) {
-    console.warn('LocalStorage church save failed:', err);
-  }
 }
 
 export const churchService = {
@@ -197,27 +190,19 @@ export const churchService = {
         .select()
         .single();
 
-      if (!error && created) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (created) {
+        await cacheService.invalidateAll(undefined, 'CHURCH_CREATED').catch(() => {});
         return { success: true, church: created as Church };
       }
-      if (error) {
-        console.warn('Supabase insert failed, using fallback:', error.message);
-      }
     } catch (err: unknown) {
-      console.warn('Supabase create exception:', err);
+      const msg = err instanceof Error ? err.message : 'Database insertion failed';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalChurches();
-    const newChurch: Church = {
-      id: `c_${Date.now()}`,
-      ...payload,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    local.push(newChurch);
-    saveLocalChurches(local);
-    return { success: true, church: newChurch };
+    return { success: false, error: 'Failed to create church: Database did not return record.' };
   },
 
   async updateChurch(id: string | number, data: Partial<Church>): Promise<{ success: boolean; church?: Church; error?: string }> {
@@ -241,22 +226,19 @@ export const churchService = {
         .select()
         .single();
 
-      if (!error && updated) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (updated) {
+        await cacheService.invalidateAll(undefined, 'CHURCH_UPDATED').catch(() => {});
         return { success: true, church: updated as Church };
       }
-    } catch (err) {
-      console.warn('Supabase update error:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Database update failed';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalChurches();
-    const idx = local.findIndex((c) => String(c.id) === String(id));
-    if (idx !== -1) {
-      local[idx] = { ...local[idx], ...data, updated_at: new Date().toISOString() };
-      saveLocalChurches(local);
-      return { success: true, church: local[idx] };
-    }
-    return { success: false, error: 'Church record not found' };
+    return { success: false, error: 'Church record not found or could not be updated.' };
   },
 
   async toggleChurchStatus(id: string | number, currentStatus: boolean): Promise<{ success: boolean; error?: string }> {
@@ -266,18 +248,17 @@ export const churchService = {
   async deleteChurch(id: string | number): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase.from('churches').delete().eq('id', id);
-      if (!error) return { success: true };
-      if (error.code === '23503') {
-        return { success: false, error: 'Cannot delete church because participants or registrations are registered under it.' };
+      if (error) {
+        if (error.code === '23503') {
+          return { success: false, error: 'Cannot delete church because participants or registrations are registered under it.' };
+        }
+        return { success: false, error: error.message };
       }
-      return { success: false, error: error.message };
+      await cacheService.invalidateAll(undefined, 'CHURCH_DELETED').catch(() => {});
+      return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Delete failed';
       return { success: false, error: msg };
-    } finally {
-      // Also update local storage if fallback
-      const local = getLocalChurches().filter((c) => String(c.id) !== String(id));
-      saveLocalChurches(local);
     }
   },
 };

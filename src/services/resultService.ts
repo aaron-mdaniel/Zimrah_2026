@@ -140,14 +140,6 @@ function getLocalResults(): EventResult[] {
   return [...SEED_RESULTS];
 }
 
-function saveLocalResults(results: EventResult[]) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_RESULTS_KEY, JSON.stringify(results));
-  } catch (err) {
-    console.warn('LocalStorage results save failed:', err);
-  }
-}
-
 export const resultService = {
   /**
    * Fetches the overview of all 34 events with their current scoring publication status.
@@ -363,56 +355,17 @@ export const resultService = {
         p_notes: notes,
       });
 
-      if (error) throw error;
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      await cacheService.invalidateAll(undefined, 'RESULT_DRAFT_SAVED').catch(() => {});
       return {
         success: true,
         eventResultId: data?.event_result_id,
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to save draft results';
-      console.warn('Supabase saveDraft error, fallback:', msg);
-
-      // Local fallback
-      const local = getLocalResults();
-      const existingIdx = local.findIndex((r) => String(r.event_id) === String(eventId));
-      const resId = existingIdx >= 0 ? local[existingIdx].id : `res_loc_${Date.now()}`;
-
-      const computedEntries: ResultEntry[] = entries.map((e, idx) => {
-        const gp = Number(e.grade_points) || 0;
-        const pp = Number(e.position_points) || 0;
-        return {
-          id: e.id || `ent_loc_${idx}_${Date.now()}`,
-          event_result_id: resId,
-          chest_number: e.chest_number,
-          participant_name: e.participant_name,
-          church_id: e.church_id,
-          participant_id: e.participant_id || undefined,
-          position: e.position,
-          grade: e.grade,
-          grade_points: gp,
-          position_points: pp,
-          total_points: gp + pp,
-          remarks: e.remarks || '',
-        };
-      });
-
-      const updatedRes: EventResult = {
-        id: resId,
-        event_id: eventId,
-        status: 'DRAFT',
-        notes,
-        updated_at: new Date().toISOString(),
-        entries: computedEntries,
-      };
-
-      if (existingIdx >= 0) {
-        local[existingIdx] = updatedRes;
-      } else {
-        local.push(updatedRes);
-      }
-      saveLocalResults(local);
-
-      return { success: true, eventResultId: String(resId) };
+      return { success: false, error: msg };
     }
   },
 
@@ -427,28 +380,17 @@ export const resultService = {
         p_event_id: eventId,
       });
 
-      if (error) throw error;
+      if (error) {
+        return { success: false, error: error.message };
+      }
       // Invalidate distributed Redis cache
-      cacheService.invalidateAll(undefined, 'RESULT_PUBLISHED').catch(() => {});
+      await cacheService.invalidateAll(undefined, 'RESULT_PUBLISHED').catch(() => {});
       return {
         success: true,
         publishedAt: data?.published_at,
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to publish result';
-      console.warn('Supabase publishResult error, fallback:', msg);
-
-      // Local fallback
-      const local = getLocalResults();
-      const res = local.find((r) => String(r.event_id) === String(eventId));
-      if (res) {
-        res.status = 'PUBLISHED';
-        res.published_at = new Date().toISOString();
-        res.updated_at = new Date().toISOString();
-        saveLocalResults(local);
-        cacheService.invalidateAll(undefined, 'LOCAL_RESULT_PUBLISHED').catch(() => {});
-        return { success: true, publishedAt: res.published_at };
-      }
       return { success: false, error: msg };
     }
   },
@@ -466,26 +408,14 @@ export const resultService = {
         p_reason: reason,
       });
 
-      if (error) throw error;
+      if (error) {
+        return { success: false, error: error.message };
+      }
       // Invalidate distributed Redis cache
-      cacheService.invalidateAll(undefined, 'RESULT_UNPUBLISHED').catch(() => {});
+      await cacheService.invalidateAll(undefined, 'RESULT_UNPUBLISHED').catch(() => {});
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to unpublish result';
-      console.warn('Supabase unpublishResult error, fallback:', msg);
-
-      // Local fallback
-      const local = getLocalResults();
-      const res = local.find((r) => String(r.event_id) === String(eventId));
-      if (res) {
-        res.status = 'DRAFT';
-        res.published_at = undefined;
-        res.published_by = undefined;
-        res.updated_at = new Date().toISOString();
-        saveLocalResults(local);
-        cacheService.invalidateAll(undefined, 'LOCAL_RESULT_UNPUBLISHED').catch(() => {});
-        return { success: true };
-      }
       return { success: false, error: msg };
     }
   },
@@ -509,41 +439,14 @@ export const resultService = {
         p_reason: reason,
       });
 
-      if (error) throw error;
+      if (error) {
+        return { success: false, error: error.message };
+      }
       // Invalidate distributed Redis cache
-      cacheService.invalidateAll(undefined, 'RESULT_CORRECTED').catch(() => {});
+      await cacheService.invalidateAll(undefined, 'RESULT_CORRECTED').catch(() => {});
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to apply score correction';
-      console.warn('Supabase correctResult error, fallback:', msg);
-
-      // Local fallback
-      const local = getLocalResults();
-      const res = local.find((r) => String(r.event_id) === String(eventId));
-      if (res) {
-        const computedEntries: ResultEntry[] = entries.map((e, idx) => {
-          const gp = Number(e.grade_points) || 0;
-          const pp = Number(e.position_points) || 0;
-          return {
-            id: e.id || `ent_loc_${idx}_${Date.now()}`,
-            event_result_id: res.id,
-            chest_number: e.chest_number,
-            participant_name: e.participant_name,
-            church_id: e.church_id,
-            participant_id: e.participant_id || undefined,
-            position: e.position,
-            grade: e.grade,
-            grade_points: gp,
-            position_points: pp,
-            total_points: gp + pp,
-            remarks: e.remarks || '',
-          };
-        });
-        res.entries = computedEntries;
-        res.updated_at = new Date().toISOString();
-        saveLocalResults(local);
-        return { success: true };
-      }
       return { success: false, error: msg };
     }
   },
@@ -557,17 +460,14 @@ export const resultService = {
         p_event_id: eventId,
       });
 
-      if (error) throw error;
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      await cacheService.invalidateAll(undefined, 'RESULT_DRAFT_DELETED').catch(() => {});
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to delete draft result';
-      console.warn('Supabase deleteDraft error, fallback:', msg);
-
-      // Local fallback
-      let local = getLocalResults();
-      local = local.filter((r) => String(r.event_id) !== String(eventId));
-      saveLocalResults(local);
-      return { success: true };
+      return { success: false, error: msg };
     }
   },
 

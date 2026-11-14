@@ -7,12 +7,10 @@ import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/forms/FormField';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
-import { UserRole } from '@/types';
 
 export const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('password123');
-  const [role, setRole] = useState<UserRole>('SUPER_ADMIN');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +36,7 @@ export const LoginPage: React.FC = () => {
       if (!username || !password) {
         throw new Error('Please enter both username and password.');
       }
-      const res = await signIn(username, password, role);
+      const res = await signIn(username, password);
       if (!res.success) {
         setError(res.error || 'Authentication failed. Please verify credentials.');
         return;
@@ -229,21 +227,6 @@ export const LoginPage: React.FC = () => {
                     Forgot Password?
                   </button>
                 </div>
-
-                <FormField
-                  label="Role Session (Local Dev / Demo)"
-                  helpText="Select simulated role tier when running without active Supabase session"
-                >
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as UserRole)}
-                    className="w-full h-10 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zim-primary font-medium"
-                  >
-                    <option value="SUPER_ADMIN">SUPER_ADMIN (Full Administrative Control)</option>
-                    <option value="RESULT_ADMIN">RESULT_ADMIN (Scores & Registrations)</option>
-                    <option value="PUBLISHER">PUBLISHER (Publishing & Leaderboards)</option>
-                  </select>
-                </FormField>
 
                 <Button
                   type="submit"

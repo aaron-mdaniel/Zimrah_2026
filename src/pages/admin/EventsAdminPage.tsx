@@ -149,13 +149,23 @@ export const EventsAdminPage: React.FC = () => {
     }
   };
 
+  // Helper to invalidate both admin and public caches
+  const invalidateEventQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+    queryClient.invalidateQueries({ queryKey: ['public-events-catalog'] });
+    queryClient.invalidateQueries({ queryKey: ['public-events-list'] });
+    queryClient.invalidateQueries({ queryKey: ['search-events'] });
+    queryClient.invalidateQueries({ queryKey: ['event-categories'] });
+    queryClient.invalidateQueries({ queryKey: ['event-divisions'] });
+  };
+
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: EventFormData) => eventService.createEvent(data),
     onSuccess: (res) => {
       if (res.success) {
         toast.success(`Competition '${res.event?.code} - ${res.event?.name}' created successfully!`);
-        queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+        invalidateEventQueries();
         setFormModalOpen(false);
         reset();
       } else {
@@ -170,7 +180,7 @@ export const EventsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success(`Competition '${res.event?.code}' updated successfully!`);
-        queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+        invalidateEventQueries();
         setFormModalOpen(false);
         setEditingEvent(null);
         reset();
@@ -186,7 +196,7 @@ export const EventsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Competition status updated.');
-        queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+        invalidateEventQueries();
       } else {
         toast.error(res.error || 'Failed to update status');
       }
@@ -198,7 +208,7 @@ export const EventsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Competition deleted successfully.');
-        queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+        invalidateEventQueries();
         setDeleteConfirmOpen(false);
         setEventToDelete(null);
       } else {

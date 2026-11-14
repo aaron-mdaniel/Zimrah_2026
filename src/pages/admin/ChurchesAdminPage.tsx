@@ -99,13 +99,22 @@ export const ChurchesAdminPage: React.FC = () => {
     },
   });
 
+  // Helper to invalidate both admin and public caches
+  const invalidateChurchQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-churches'] });
+    queryClient.invalidateQueries({ queryKey: ['churches-active'] });
+    queryClient.invalidateQueries({ queryKey: ['church-standings'] });
+    queryClient.invalidateQueries({ queryKey: ['live-summary'] });
+    queryClient.invalidateQueries({ queryKey: ['search-churches'] });
+  };
+
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: ChurchFormData) => churchService.createChurch(data),
     onSuccess: (res) => {
       if (res.success) {
         toast.success(`Parish church '${res.church?.code} - ${res.church?.name}' registered successfully!`);
-        queryClient.invalidateQueries({ queryKey: ['admin-churches'] });
+        invalidateChurchQueries();
         setFormModalOpen(false);
         reset();
       } else {
@@ -124,7 +133,7 @@ export const ChurchesAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success(`Parish church '${res.church?.code}' updated successfully!`);
-        queryClient.invalidateQueries({ queryKey: ['admin-churches'] });
+        invalidateChurchQueries();
         setFormModalOpen(false);
         setEditingChurch(null);
         reset();
@@ -144,7 +153,7 @@ export const ChurchesAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Church active status updated.');
-        queryClient.invalidateQueries({ queryKey: ['admin-churches'] });
+        invalidateChurchQueries();
       } else {
         toast.error(res.error || 'Failed to toggle status');
       }
@@ -156,7 +165,7 @@ export const ChurchesAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Church deleted successfully.');
-        queryClient.invalidateQueries({ queryKey: ['admin-churches'] });
+        invalidateChurchQueries();
         setDeleteConfirmOpen(false);
         setChurchToDelete(null);
       } else {

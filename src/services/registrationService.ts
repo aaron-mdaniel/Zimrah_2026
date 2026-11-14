@@ -1,12 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import { cacheService } from './cacheService';
 import {
   Registration,
   CompetitionEvent,
   Participant,
-  GroupRegistrationMember,
 } from '@/types';
 import { eventService } from './eventService';
-import { churchService } from './churchService';
 import { participantService } from './participantService';
 
 export interface RegistrationDashboardEvent extends CompetitionEvent {
@@ -175,14 +174,6 @@ function getLocalRegistrations(): Registration[] {
     console.warn('LocalStorage registrations parse failed:', err);
   }
   return [...SEED_REGISTRATIONS];
-}
-
-function saveLocalRegistrations(regs: Registration[]) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_REGISTRATIONS_KEY, JSON.stringify(regs));
-  } catch (err) {
-    console.warn('LocalStorage registrations save failed:', err);
-  }
 }
 
 export const registrationService = {
@@ -363,6 +354,7 @@ export const registrationService = {
       });
 
       if (!error && data && data.success) {
+        await cacheService.invalidateAll(undefined, 'REGISTRATION_CREATED').catch(() => {});
         return { success: true };
       }
       if (error) {
@@ -386,33 +378,19 @@ export const registrationService = {
         .select()
         .single();
 
-      if (!error && created) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (created) {
+        await cacheService.invalidateAll(undefined, 'REGISTRATION_CREATED').catch(() => {});
         return { success: true, registration: created as Registration };
       }
-    } catch (err) {
-      console.warn('Supabase direct insert exception:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration insertion failed';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalRegistrations();
-    const church = await churchService.getChurchById(payload.church_id);
-
-    const newReg: Registration = {
-      id: `reg_${Date.now()}`,
-      edition_id: editionId,
-      event_id: payload.event_id,
-      church_id: payload.church_id,
-      participant_id: payload.participant_id,
-      chest_number: chestNumber,
-      registered_at: new Date().toISOString(),
-      participant,
-      church: church || undefined,
-      event,
-    };
-
-    local.push(newReg);
-    saveLocalRegistrations(local);
-    return { success: true, registration: newReg };
+    return { success: false, error: 'Registration failed: Database did not return record.' };
   },
 
   /**
@@ -508,44 +486,21 @@ export const registrationService = {
       });
 
       if (!error && data && data.success) {
+        await cacheService.invalidateAll(undefined, 'GROUP_REGISTRATION_CREATED').catch(() => {});
         return { success: true };
       }
       if (error) {
-        console.warn('RPC create_group_registration error, falling back:', error.message);
+        return { success: false, error: error.message };
       }
-    } catch (err) {
-      console.warn('Group registration RPC exception:', err);
+      if (data && !data.success) {
+        return { success: false, error: data.error || 'Group registration failed.' };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Group registration RPC exception';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalRegistrations();
-    const church = await churchService.getChurchById(payload.church_id);
-
-    const members: GroupRegistrationMember[] = churchParticipants
-      .filter((p) => payload.member_ids.map(String).includes(String(p.id)))
-      .map((p, idx) => ({
-        id: `m_${Date.now()}_${idx}`,
-        registration_id: `reg_${Date.now()}`,
-        participant_id: p.id,
-        participant: p,
-      }));
-
-    const newReg: Registration = {
-      id: `reg_${Date.now()}`,
-      edition_id: editionId,
-      event_id: payload.event_id,
-      church_id: payload.church_id,
-      group_name: payload.group_name.trim(),
-      chest_number: payload.chest_number.trim(),
-      registered_at: new Date().toISOString(),
-      church: church || undefined,
-      event,
-      members,
-    };
-
-    local.push(newReg);
-    saveLocalRegistrations(local);
-    return { success: true, registration: newReg };
+    return { success: false, error: 'Failed to create group registration.' };
   },
 
   /**
@@ -554,20 +509,20 @@ export const registrationService = {
   async deleteRegistration(id: string | number): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase.from('registrations').delete().eq('id', id);
-      if (!error) return { success: true };
-      if (error.code === '23503') {
-        return {
-          success: false,
-          error: 'Cannot delete registration because official scores or results have already been tabulated.',
-        };
+      if (error) {
+        if (error.code === '23503') {
+          return {
+            success: false,
+            error: 'Cannot delete registration because official scores or results have already been tabulated.',
+          };
+        }
+        return { success: false, error: error.message };
       }
-      return { success: false, error: error.message };
+      await cacheService.invalidateAll(undefined, 'REGISTRATION_DELETED').catch(() => {});
+      return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Delete failed';
       return { success: false, error: msg };
-    } finally {
-      const local = getLocalRegistrations().filter((r) => String(r.id) !== String(id));
-      saveLocalRegistrations(local);
     }
   },
 

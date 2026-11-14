@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { cacheService } from './cacheService';
 import { Participant, Church, Gender, AgeCategory } from '@/types';
 import { churchService } from './churchService';
 
@@ -68,14 +69,6 @@ function getLocalParticipants(): Participant[] {
     console.warn('LocalStorage participant parse failed:', err);
   }
   return [...SEED_PARTICIPANTS];
-}
-
-function saveLocalParticipants(participants: Participant[]) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(participants));
-  } catch (err) {
-    console.warn('LocalStorage participant save failed:', err);
-  }
 }
 
 export const participantService = {
@@ -250,39 +243,19 @@ export const participantService = {
         .select(`*, church:churches(id, code, name)`)
         .single();
 
-      if (!error && created) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (created) {
+        await cacheService.invalidateAll(undefined, 'PARTICIPANT_CREATED').catch(() => {});
         return { success: true, participant: created as Participant };
       }
-      if (error) {
-        console.warn('Supabase insert failed, using fallback:', error.message);
-      }
-    } catch (err) {
-      console.warn('Supabase createParticipant exception:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Database insertion failed';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalParticipants();
-    const church = (await churchService.getAllActiveChurches()).find(
-      (c) => String(c.id) === String(data.church_id)
-    );
-
-    const newParticipant: Participant = {
-      id: `p_${Date.now()}`,
-      edition_id: editionId || 'e2026',
-      chest_number: cleanChest,
-      name: payload.name,
-      name_malayalam: payload.name_malayalam,
-      gender: payload.gender as Gender,
-      church_id: payload.church_id!,
-      age_category: payload.age_category as AgeCategory,
-      phone: payload.phone,
-      church,
-      created_at: new Date().toISOString(),
-    };
-
-    local.push(newParticipant);
-    saveLocalParticipants(local);
-    return { success: true, participant: newParticipant };
+    return { success: false, error: 'Database did not return created participant.' };
   },
 
   async updateParticipant(
@@ -309,39 +282,35 @@ export const participantService = {
         .select(`*, church:churches(id, code, name)`)
         .single();
 
-      if (!error && updated) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (updated) {
+        await cacheService.invalidateAll(undefined, 'PARTICIPANT_UPDATED').catch(() => {});
         return { success: true, participant: updated as Participant };
       }
-    } catch (err) {
-      console.warn('Supabase updateParticipant error:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Database update failed';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalParticipants();
-    const idx = local.findIndex((p) => String(p.id) === String(id));
-    if (idx !== -1) {
-      local[idx] = { ...local[idx], ...data };
-      saveLocalParticipants(local);
-      return { success: true, participant: local[idx] };
-    }
-
-    return { success: false, error: 'Participant not found.' };
+    return { success: false, error: 'Participant not found or could not be updated.' };
   },
 
   async deleteParticipant(id: string | number): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase.from('participants').delete().eq('id', id);
-      if (!error) return { success: true };
-      if (error.code === '23503') {
-        return { success: false, error: 'Cannot delete participant with active competition entries or registrations.' };
+      if (error) {
+        if (error.code === '23503') {
+          return { success: false, error: 'Cannot delete participant with active competition entries or registrations.' };
+        }
+        return { success: false, error: error.message };
       }
-      return { success: false, error: error.message };
+      await cacheService.invalidateAll(undefined, 'PARTICIPANT_DELETED').catch(() => {});
+      return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Delete failed';
       return { success: false, error: msg };
-    } finally {
-      const local = getLocalParticipants().filter((p) => String(p.id) !== String(id));
-      saveLocalParticipants(local);
     }
   },
 

@@ -130,6 +130,19 @@ export const ResultEntryAdminPage: React.FC = () => {
     enabled: !!activeEvent?.result_id && auditModalOpen,
   });
 
+  // Helper to invalidate all admin and public leaderboard/result caches
+  const invalidateResultQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-results-status'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-event-result-detail'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-result-audit'] });
+    queryClient.invalidateQueries({ queryKey: ['live-summary'] });
+    queryClient.invalidateQueries({ queryKey: ['church-standings'] });
+    queryClient.invalidateQueries({ queryKey: ['individual-standings'] });
+    queryClient.invalidateQueries({ queryKey: ['home-published-results'] });
+    queryClient.invalidateQueries({ queryKey: ['public-published-results'] });
+    queryClient.invalidateQueries({ queryKey: ['public-result-scorecard'] });
+  };
+
   // Mutations
   const saveDraftMutation = useMutation({
     mutationFn: (data: { eventId: string | number; entries: ResultEntryPayload[]; notes: string }) =>
@@ -137,8 +150,7 @@ export const ResultEntryAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Draft results saved successfully with authoritative score calculations.');
-        queryClient.invalidateQueries({ queryKey: ['admin-results-status'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-event-result-detail'] });
+        invalidateResultQueries();
         setEntryModalOpen(false);
       } else {
         toast.error(res.error || 'Failed to save draft results');
@@ -154,8 +166,7 @@ export const ResultEntryAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Results published successfully! Championship ledger points are now active.');
-        queryClient.invalidateQueries({ queryKey: ['admin-results-status'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-event-result-detail'] });
+        invalidateResultQueries();
         setPreviewModalOpen(false);
       } else {
         toast.error(res.error || 'Failed to publish results');
@@ -172,8 +183,7 @@ export const ResultEntryAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.warning('Results unpublished. Points have been deactivated from public leaderboards.');
-        queryClient.invalidateQueries({ queryKey: ['admin-results-status'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-event-result-detail'] });
+        invalidateResultQueries();
         setUnpublishModalOpen(false);
         setUnpublishReason('');
       } else {
@@ -191,8 +201,7 @@ export const ResultEntryAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Published results corrected successfully. Leaderboard points updated.');
-        queryClient.invalidateQueries({ queryKey: ['admin-results-status'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-event-result-detail'] });
+        invalidateResultQueries();
         setEntryModalOpen(false);
         setCorrectionReason('');
       } else {
@@ -209,7 +218,7 @@ export const ResultEntryAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Result draft deleted successfully.');
-        queryClient.invalidateQueries({ queryKey: ['admin-results-status'] });
+        invalidateResultQueries();
         setDeleteConfirmOpen(false);
       } else {
         toast.error(res.error || 'Failed to delete draft');

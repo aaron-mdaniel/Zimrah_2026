@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import { championshipService } from '@/services/championshipService';
+import { cacheService } from '@/services/cacheService';
 import { supabase } from '@/lib/supabase';
 
 interface RawLedgerEntry {
@@ -65,7 +66,8 @@ export const ChampionshipsAdminPage: React.FC = () => {
     enabled: tab === 'ledger',
   });
 
-  const handleRecalculate = () => {
+  const handleRecalculate = async () => {
+    await cacheService.invalidateAll(undefined, 'MANUAL_RECALCULATE').catch(() => {});
     queryClient.invalidateQueries({ queryKey: ['admin-church-standings'] });
     queryClient.invalidateQueries({ queryKey: ['admin-individual-standings'] });
     queryClient.invalidateQueries({ queryKey: ['admin-raw-point-ledger'] });

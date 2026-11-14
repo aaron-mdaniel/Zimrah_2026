@@ -156,6 +156,14 @@ export const RegistrationsAdminPage: React.FC = () => {
   // Active group event metadata
   const selectedGroupEvent = allEvents.find((e) => String(e.id) === String(watchedGroupEventId));
 
+  // Helper to invalidate registration and roster queries
+  const invalidateRegistrationQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-registrations-dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-events-registration-status'] });
+    queryClient.invalidateQueries({ queryKey: ['event-roster'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-event-result-detail'] });
+  };
+
   // Mutations
   const createIndividualMutation = useMutation({
     mutationFn: (data: IndividualFormData) =>
@@ -168,8 +176,7 @@ export const RegistrationsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Contestant registered successfully for event!');
-        queryClient.invalidateQueries({ queryKey: ['admin-registrations-dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['event-roster'] });
+        invalidateRegistrationQueries();
         setIndividualModalOpen(false);
         individualForm.reset();
       } else {
@@ -190,8 +197,7 @@ export const RegistrationsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success(`Team '${groupForm.getValues('group_name')}' registered successfully!`);
-        queryClient.invalidateQueries({ queryKey: ['admin-registrations-dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['event-roster'] });
+        invalidateRegistrationQueries();
         setGroupModalOpen(false);
         groupForm.reset();
       } else {
@@ -205,8 +211,7 @@ export const RegistrationsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Registration entry removed successfully.');
-        queryClient.invalidateQueries({ queryKey: ['admin-registrations-dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['event-roster'] });
+        invalidateRegistrationQueries();
         setDeleteConfirmOpen(false);
         setRegToDelete(null);
       } else {

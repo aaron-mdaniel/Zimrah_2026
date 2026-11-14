@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import { cacheService } from './cacheService';
 import {
   CompetitionEvent,
   EventCategory,
   EventDivision,
   EventSection,
   Edition,
-  EventType,
 } from '@/types';
 
 export interface EventQueryParams {
@@ -96,14 +96,6 @@ function getLocalEvents(): CompetitionEvent[] {
     console.warn('LocalStorage events parse failed:', err);
   }
   return [...SEED_EVENTS];
-}
-
-function saveLocalEvents(events: CompetitionEvent[]) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(events));
-  } catch (err) {
-    console.warn('LocalStorage events save failed:', err);
-  }
 }
 
 export const eventService = {
@@ -355,28 +347,19 @@ export const eventService = {
         `)
         .single();
 
-      if (!error && created) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (created) {
+        await cacheService.invalidateAll(undefined, 'EVENT_CREATED').catch(() => {});
         return { success: true, event: created as CompetitionEvent };
       }
-      if (error) {
-        console.warn('Supabase insert failed:', error.message);
-      }
-    } catch (err) {
-      console.warn('Supabase createEvent exception:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Database insertion failed';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalEvents();
-    const newEvent: CompetitionEvent = {
-      id: `ev_${Date.now()}`,
-      ...payload,
-      event_type: payload.event_type as EventType,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    local.push(newEvent);
-    saveLocalEvents(local);
-    return { success: true, event: newEvent };
+    return { success: false, error: 'Database did not return created competition event.' };
   },
 
   async updateEvent(
@@ -408,23 +391,19 @@ export const eventService = {
         `)
         .single();
 
-      if (!error && updated) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (updated) {
+        await cacheService.invalidateAll(undefined, 'EVENT_UPDATED').catch(() => {});
         return { success: true, event: updated as CompetitionEvent };
       }
-    } catch (err) {
-      console.warn('Supabase updateEvent error:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Database update failed';
+      return { success: false, error: msg };
     }
 
-    // Local fallback
-    const local = getLocalEvents();
-    const idx = local.findIndex((e) => String(e.id) === String(id));
-    if (idx !== -1) {
-      local[idx] = { ...local[idx], ...data, updated_at: new Date().toISOString() };
-      saveLocalEvents(local);
-      return { success: true, event: local[idx] };
-    }
-
-    return { success: false, error: 'Event record not found.' };
+    return { success: false, error: 'Event record not found or could not be updated.' };
   },
 
   async toggleEventActive(id: string | number, currentStatus: boolean): Promise<{ success: boolean; error?: string }> {
@@ -434,17 +413,17 @@ export const eventService = {
   async deleteEvent(id: string | number): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase.from('events').delete().eq('id', id);
-      if (!error) return { success: true };
-      if (error.code === '23503') {
-        return { success: false, error: 'Cannot delete competition with existing registrations or results.' };
+      if (error) {
+        if (error.code === '23503') {
+          return { success: false, error: 'Cannot delete competition with existing registrations or results.' };
+        }
+        return { success: false, error: error.message };
       }
-      return { success: false, error: error.message };
+      await cacheService.invalidateAll(undefined, 'EVENT_DELETED').catch(() => {});
+      return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Delete failed';
       return { success: false, error: msg };
-    } finally {
-      const local = getLocalEvents().filter((e) => String(e.id) !== String(id));
-      saveLocalEvents(local);
     }
   },
 };

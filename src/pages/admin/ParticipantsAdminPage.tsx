@@ -115,13 +115,21 @@ export const ParticipantsAdminPage: React.FC = () => {
     },
   });
 
+  // Helper to invalidate both admin and public caches
+  const invalidateParticipantQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-participants'] });
+    queryClient.invalidateQueries({ queryKey: ['individual-standings'] });
+    queryClient.invalidateQueries({ queryKey: ['live-summary'] });
+    queryClient.invalidateQueries({ queryKey: ['search-participants'] });
+  };
+
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: ParticipantFormData) => participantService.createParticipant(data),
     onSuccess: (res) => {
       if (res.success) {
         toast.success(`Participant #${res.participant?.chest_number} (${res.participant?.name}) registered!`);
-        queryClient.invalidateQueries({ queryKey: ['admin-participants'] });
+        invalidateParticipantQueries();
         setFormModalOpen(false);
         reset();
       } else {
@@ -136,7 +144,7 @@ export const ParticipantsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success(`Participant #${res.participant?.chest_number} updated!`);
-        queryClient.invalidateQueries({ queryKey: ['admin-participants'] });
+        invalidateParticipantQueries();
         setFormModalOpen(false);
         setEditingParticipant(null);
         reset();
@@ -151,7 +159,7 @@ export const ParticipantsAdminPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         toast.success('Participant deleted successfully.');
-        queryClient.invalidateQueries({ queryKey: ['admin-participants'] });
+        invalidateParticipantQueries();
         setDeleteConfirmOpen(false);
         setParticipantToDelete(null);
       } else {
@@ -165,7 +173,7 @@ export const ParticipantsAdminPage: React.FC = () => {
       participantService.commitBulkParticipants(preview.validRows, preview.editionId),
     onSuccess: (summary) => {
       setImportSummary(summary);
-      queryClient.invalidateQueries({ queryKey: ['admin-participants'] });
+      invalidateParticipantQueries();
       if (summary.importedCount > 0) {
         toast.success(`Successfully imported ${summary.importedCount} participants!`);
       }

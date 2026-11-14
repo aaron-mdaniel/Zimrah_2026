@@ -51,6 +51,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         return userProf;
       }
+
+      // If user profile row does not exist yet in public.user_profiles, auto-provision via RPC
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('ensure_user_profile');
+        if (!rpcError && rpcData) {
+          const userProf: UserProfile = {
+            id: rpcData.id,
+            username: rpcData.username,
+            full_name: rpcData.full_name || '',
+            email: email || '',
+            role: rpcData.role as UserRole,
+            phone: rpcData.phone || '',
+            is_active: rpcData.is_active ?? true,
+            created_at: rpcData.created_at,
+            updated_at: rpcData.updated_at,
+          };
+          return userProf;
+        }
+      } catch (rpcErr) {
+        console.warn('ensure_user_profile RPC call warning:', rpcErr);
+      }
+
       return null;
     } catch (err) {
       console.warn('Profile fetch exception:', err);
@@ -87,14 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setProfile(fallback);
           }
         } else {
-          // Check if offline/demo session was persisted in local storage
-          const cached = localStorage.getItem(LOCAL_STORAGE_SESSION_KEY);
-          if (cached && mounted) {
-            try {
-              setProfile(JSON.parse(cached));
-            } catch {
-              localStorage.removeItem(LOCAL_STORAGE_SESSION_KEY);
-            }
+          // No active Supabase session -> ensure authenticated state is cleared
+          if (mounted) {
+            setProfile(null);
+            localStorage.removeItem(LOCAL_STORAGE_SESSION_KEY);
           }
         }
       } catch (err) {
@@ -147,21 +165,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (
     emailOrUsername: string,
-    password: string,
-    simulatedRole: UserRole = 'SUPER_ADMIN'
+    password: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
       const isEmail = emailOrUsername.includes('@');
       const email = isEmail ? emailOrUsername : `${emailOrUsername.toLowerCase()}@zimrah2026.org`;
 
-      // 1. Attempt live Supabase Auth login
+      // Attempt live Supabase Auth login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (!error && data.user) {
+      if (error) {
+        return {
+          success: false,
+          error: error.message || 'Invalid username or password. Please verify credentials.',
+        };
+      }
+
+      if (data.user) {
         const userProf = await fetchUserProfile(data.user.id, data.user.email);
         if (userProf) {
           if (!userProf.is_active) {
@@ -171,32 +195,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(userProf);
           localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(userProf));
           return { success: true };
+        } else {
+          const fallback: UserProfile = {
+            id: data.user.id,
+            username: data.user.email?.split('@')[0] || 'admin',
+            email: data.user.email || '',
+            role: 'SUPER_ADMIN',
+            is_active: true,
+          };
+          setProfile(fallback);
+          localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(fallback));
+          return { success: true };
         }
-      }
-
-      // 2. Offline / local development fallback for fast demo and evaluation
-      if (
-        (emailOrUsername === 'admin' || emailOrUsername === 'super_admin@zimrah.org') ||
-        password === 'password123' ||
-        password === 'password'
-      ) {
-        const demoUser: UserProfile = {
-          id: '00000000-0000-0000-0000-000000000001',
-          username: emailOrUsername.split('@')[0],
-          full_name: 'Administrator',
-          email: isEmail ? emailOrUsername : `${emailOrUsername}@zimrah2026.org`,
-          role: simulatedRole,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        };
-        setProfile(demoUser);
-        localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(demoUser));
-        return { success: true };
       }
 
       return {
         success: false,
-        error: error?.message || 'Invalid username or password. Please verify credentials.',
+        error: 'Authentication failed. Please verify credentials.',
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Authentication failed';
