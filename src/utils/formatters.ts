@@ -66,3 +66,12 @@ export function titleCase(text: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
+
+/**
+ * Validate standard UUID format (v4 or general 8-4-4-4-12 hex)
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isValidUuid(val: unknown): boolean {
+  if (typeof val !== 'string') return false;
+  return UUID_REGEX.test(val.trim());
+}

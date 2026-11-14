@@ -109,12 +109,21 @@ BEGIN
             RAISE EXCEPTION 'Validation Error: Chest number and participant name are required for every entry.';
         END IF;
 
-        v_church_id := (v_entry->>'church_id')::UUID;
+        IF (v_entry->>'church_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+            v_church_id := (v_entry->>'church_id')::UUID;
+        ELSE
+            v_church_id := NULL;
+        END IF;
+
         IF v_church_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.churches WHERE id = v_church_id) THEN
             RAISE EXCEPTION 'Validation Error: Church ID is invalid or missing for contestant %.', v_chest;
         END IF;
 
-        v_part_id := NULLIF(v_entry->>'participant_id', '')::UUID;
+        IF (v_entry->>'participant_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+            v_part_id := (v_entry->>'participant_id')::UUID;
+        ELSE
+            v_part_id := NULL;
+        END IF;
         
         IF v_entry->>'position' IS NOT NULL AND v_entry->>'position' != '' AND v_entry->>'position' != 'null' THEN
             v_pos := (v_entry->>'position')::SMALLINT;
@@ -138,7 +147,11 @@ BEGIN
         END IF;
 
         v_rem := trim(COALESCE(v_entry->>'remarks', ''));
-        v_entry_id := NULLIF(v_entry->>'id', '')::UUID;
+        IF (v_entry->>'id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+            v_entry_id := (v_entry->>'id')::UUID;
+        ELSE
+            v_entry_id := NULL;
+        END IF;
 
         -- Check if updating existing entry or inserting new
         IF v_entry_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.result_entries WHERE id = v_entry_id AND event_result_id = v_result_id) THEN
@@ -190,7 +203,11 @@ BEGIN
             DELETE FROM public.result_participants WHERE result_entry_id = v_entry_id;
             FOR v_member IN SELECT * FROM jsonb_array_elements(v_entry->'group_members')
             LOOP
-                v_m_part_id := NULLIF(v_member->>'participant_id', '')::UUID;
+                IF (v_member->>'participant_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+                    v_m_part_id := (v_member->>'participant_id')::UUID;
+                ELSE
+                    v_m_part_id := NULL;
+                END IF;
                 v_m_role := trim(COALESCE(v_member->>'role', ''));
                 v_m_pts := round(COALESCE((v_member->>'points_allocated')::NUMERIC, 0.00), 2)::DECIMAL(5, 2);
                 

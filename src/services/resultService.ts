@@ -17,6 +17,7 @@ import {
 } from '@/types';
 import { eventService } from './eventService';
 import { cacheService } from './cacheService';
+import { isValidUuid } from '@/utils/formatters';
 
 export interface ResultEntryPayload {
   id?: string | number;
@@ -327,7 +328,12 @@ export const resultService = {
       const matched = local.find((r) => String(r.event_id) === String(eventId));
       if (matched) {
         result = matched;
-        entries = matched.entries || [];
+        entries = (matched.entries || []).map((e) => ({
+          ...e,
+          // Strip any non-UUID or mock IDs (e.g. ent_loc_..., entry_1)
+          id: e.id && isValidUuid(e.id) ? e.id : undefined,
+          participant_id: e.participant_id && isValidUuid(e.participant_id) ? e.participant_id : undefined,
+        })) as ResultEntry[];
       }
     }
 
@@ -349,14 +355,26 @@ export const resultService = {
     notes: string = ''
   ): Promise<{ success: boolean; eventResultId?: string; error?: string }> {
     try {
+      // Defensive sanitization: ensure IDs and participant_ids are valid UUIDs, not mock/client strings
+      const sanitizedEntries = entries.map((e) => ({
+        ...e,
+        id: e.id && isValidUuid(e.id) ? String(e.id) : undefined,
+        participant_id: e.participant_id && isValidUuid(e.participant_id) ? String(e.participant_id) : null,
+      }));
+
       const { data, error } = await supabase.rpc('save_result_draft', {
         p_event_id: eventId,
-        p_entries: entries,
+        p_entries: sanitizedEntries,
         p_notes: notes,
       });
 
       if (error) {
         return { success: false, error: error.message };
+      }
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_RESULTS_KEY);
+      } catch {
+        // ignore
       }
       await cacheService.invalidateAll(undefined, 'RESULT_DRAFT_SAVED').catch(() => {});
       return {
@@ -433,9 +451,15 @@ export const resultService = {
     }
 
     try {
+      const sanitizedEntries = entries.map((e) => ({
+        ...e,
+        id: e.id && isValidUuid(e.id) ? String(e.id) : undefined,
+        participant_id: e.participant_id && isValidUuid(e.participant_id) ? String(e.participant_id) : null,
+      }));
+
       const { error } = await supabase.rpc('correct_published_result', {
         p_event_id: eventId,
-        p_entries: entries,
+        p_entries: sanitizedEntries,
         p_reason: reason,
       });
 

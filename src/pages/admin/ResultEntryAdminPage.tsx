@@ -41,6 +41,7 @@ import {
 import { churchService } from '@/services/churchService';
 import { eventService } from '@/services/eventService';
 import { GradeType, PositionType } from '@/types';
+import { isValidUuid } from '@/utils/formatters';
 
 interface ScoreEntryRow {
   id?: string | number;
@@ -276,11 +277,11 @@ export const ResultEntryAdminPage: React.FC = () => {
     if (eventDetail && entryModalOpen) {
       if (eventDetail.entries.length > 0) {
         const loadedRows: ScoreEntryRow[] = eventDetail.entries.map((e) => ({
-          id: e.id,
+          id: e.id && isValidUuid(e.id) ? e.id : undefined,
           chest_number: e.chest_number,
           participant_name: e.participant_name,
           church_id: String(e.church_id || e.church?.id || ''),
-          participant_id: e.participant_id ? String(e.participant_id) : undefined,
+          participant_id: e.participant_id && isValidUuid(e.participant_id) ? String(e.participant_id) : undefined,
           position: e.position ? String(e.position) : '',
           grade: e.grade || '',
           grade_points: String(e.grade_points ?? '0.00'),
@@ -343,11 +344,11 @@ export const ResultEntryAdminPage: React.FC = () => {
     }
 
     const payload: ResultEntryPayload[] = rows.map((r) => ({
-      id: r.id,
+      id: r.id && isValidUuid(r.id) ? String(r.id) : undefined,
       chest_number: r.chest_number.trim(),
       participant_name: r.participant_name.trim(),
       church_id: r.church_id,
-      participant_id: r.participant_id || null,
+      participant_id: r.participant_id && isValidUuid(r.participant_id) ? String(r.participant_id) : null,
       position: (r.position ? Number(r.position) : null) as PositionType,
       grade: r.grade as GradeType,
       grade_points: r.grade_points,
